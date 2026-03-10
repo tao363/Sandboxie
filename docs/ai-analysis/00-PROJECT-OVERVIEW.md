@@ -1,538 +1,319 @@
-# Sandboxie 项目全景分析报告
+# Sandboxie 项目全景分析
 
-## 📋 执行摘要
-
-本报告对 Sandboxie 开源沙箱项目进行了全面的技术分析，涵盖内核驱动层、服务层、GUI 层三大核心模块，以及它们之间的交互关系。分析基于最新的源代码，采用自底向上的分层分析方法。
-
-**项目规模**：
-- 总代码行数：约 150,000+ 行
-- 核心文件数：200+ 个
-- 支持平台：Windows 7 - Windows 11 (x64/ARM64)
-- 编程语言：C/C++, Qt
+> **文档版本**：1.0 | **分析日期**：2026-03-11
+> **项目来源**：[Sandboxie-Plus](https://github.com/sandboxie-plus/Sandboxie)
 
 ---
 
-## 1. 项目概览
+## 目录
 
-### 1.1 什么是 Sandboxie
+1. [项目简介](#1-项目简介)
+2. [整体架构](#2-整体架构)
+3. [核心模块详解](#3-核心模块详解)
+4. [关键技术原理](#4-关键技术原理)
+5. [完整进程生命周期](#5-完整进程生命周期)
+6. [文件系统虚拟化](#6-文件系统虚拟化)
+7. [注册表虚拟化](#7-注册表虚拟化)
+8. [IPC 隔离](#8-ipc-隔离)
+9. [安全模型](#9-安全模型)
+10. [内核 API 汇总](#10-内核-api-汇总)
+11. [配置系统](#11-配置系统)
+12. [源码文件索引](#12-源码文件索引)
 
-Sandboxie 是一个基于沙箱隔离技术的 Windows 安全软件，通过创建隔离的虚拟环境来运行应用程序，防止程序对系统造成永久性修改。
+---
 
-**核心特性**：
-- ✅ 文件系统虚拟化（写时复制）
-- ✅ 注册表虚拟化
-- ✅ 进程隔离和访问控制
-- ✅ IPC（进程间通信）隔离
-- ✅ 网络过滤和控制
-- ✅ COM 对象隔离
+## 1. 项目简介
 
-### 1.2 项目历史
+Sandboxie 是一个 **Windows 沙箱隔离系统**，允许用户在隔离环境中运行任意程序——所有文件写入、注册表修改、IPC 通信都被重定向到沙箱专属区域，不影响真实系统，可随时一键清除。
 
-| 时间线 | 维护者 |
-|-------|--------|
-| 2004 - 2013 | Ronen Tzur |
-| 2013 - 2017 | Invincea Inc. |
-| 2017 - 2020 | Sophos Group plc |
-| 2020.04.08 | 开源发布 |
-| 2020.04.09+ | David Xanatos (社区分支) |
+**典型使用场景**：
+- 安全测试未知程序（防止恶意软件感染系统）
+- 运行多个独立的浏览器会话
+- 测试安装包而不污染真实注册表/文件系统
+- 隔离运行过时/不受信任的软件
 
 ---
 
 ## 2. 整体架构
 
-### 2.1 三层架构图
+### 三层架构图
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    应用程序层                              │
-│              (被沙箱化的应用程序)                          │
-└────────────────────┬────────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────────┐
-│                 SbieDll.dll                              │
-│            (用户态 Hook 和重定向)                         │
-│  • API Hooking (CreateFile, RegSetValue...)             │
-│  • 路径转换 (真实路径 ↔ 沙箱路径)                         │
-│  • 与 SbieSvc 通信 (LPC)                                 │
-└────────────────────┬────────────────────────────────────┘
-                     │
-        ┌────────────┴────────────┐
-        │                         │
-┌───────▼──────┐         ┌───────▼──────────┐
-│  SbieSvc.exe │         │   SbieDrv.sys    │
-│  (系统服务)   │◄────────┤   (内核驱动)      │
-│              │  IOCTL  │                  │
-└──────────────┘         └──────────────────┘
-        │                         │
-        │                         │
-┌───────▼─────────────────────────▼──────────────────────┐
-│              Windows 操作系统内核                         │
-│  • 文件系统 (NTFS)                                       │
-│  • 注册表 (Registry)                                     │
-│  • 进程管理 (Process Manager)                            │
-│  • 对象管理 (Object Manager)                             │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph L3[第三层：图形界面层]
+        SANDMAN[SandMan.exe Qt6 GUI]
+        QAPI[QSbieAPI Qt封装库]
+    end
+    subgraph L2[第二层：系统服务层]
+        SBIESVC[SbieSvc.exe SYSTEM权限]
+        LOWLEVEL[LowLevel.dll 注入辅助]
+    end
+    subgraph L1[第一层：内核驱动层]
+        SBIEDRV[SbieDrv.sys Ring 0]
+    end
+    subgraph SB[沙箱进程]
+        PROC[被沙箱化的进程]
+        SDLL[SbieDll.dll Hook层]
+    end
+
+    SANDMAN --- QAPI
+    QAPI -->|IOCTL| SBIEDRV
+    QAPI -->|命名管道| SBIESVC
+    SBIESVC -->|LPC| SBIEDRV
+    SBIESVC --> LOWLEVEL
+    LOWLEVEL -->|远程线程注入| SDLL
+    SDLL -->|IOCTL| SBIEDRV
+    SDLL -->|命名管道| SBIESVC
+    PROC --- SDLL
 ```
 
-### 2.2 模块间通信
+### 各层职责
 
-```
-GUI (SandMan.exe)
-    ↓ Qt Signals/Slots
-QSbieAPI (Qt API 封装)
-    ↓ LPC (Local Procedure Call)
-SbieSvc.exe (系统服务)
-    ↓ IOCTL (DeviceIoControl)
-SbieDrv.sys (内核驱动)
-    ↓ 系统调用拦截
-Windows 内核
-```
+| 层次 | 组件 | 权限 | 核心职责 |
+|------|------|------|--------|
+| 内核驱动 | SbieDrv.sys | Ring 0 | 强制隔离，系统调用/文件/注册表/IPC 拦截 |
+| 系统服务 | SbieSvc.exe | SYSTEM | 驱动加载，DLL 注入，特权操作代理 |
+| 用户 Hook | SbieDll.dll | 进程内 | API Hook，路径重定向，用户态过滤 |
+| 图形界面 | SandMan.exe | 普通用户 | 沙箱管理，配置编辑，监控展示 |
 
 ---
 
 ## 3. 核心模块详解
 
-### 3.1 内核驱动层 (SbieDrv.sys)
+### 3.1 SbieDrv.sys — 内核驱动
 
-**路径**：`Sandboxie/core/drv/`  
-**代码量**：约 50,000+ 行  
-**核心文件**：50+ 个
+详见 [01-kernel-driver-layer.md](modules/01-kernel-driver-layer.md)
 
-**主要职责**：
-- 系统调用拦截（Syscall Hooking）
-- 文件系统虚拟化（Minifilter）
-- 注册表虚拟化
-- 进程创建监控和隔离
-- IPC 隔离
-- 网络过滤（WFP）
-- 令牌管理和权限控制
+| 子系统 | 实现文件 | 技术机制 |
+|--------|---------|--------|
+| 进程监控 | `process.c` | `PsSetCreateProcessNotifyRoutineEx` |
+| 文件虚拟化 | `file.c`, `file_flt.c` | FltMgr 微过滤器 |
+| 注册表虚拟化 | `key.c`, `key_flt.c` | `CmRegisterCallbackEx` |
+| IPC 隔离 | `ipc.c` | `ObRegisterCallbacks` |
+| 令牌降权 | `token.c` | `SeFilterToken` + 完整性级别 |
+| 线程保护 | `thread.c` | Object 回调 + 系统调用拦截 |
+| 网络过滤 | `wfp.c` | Windows Filtering Platform |
+| 系统调用拦截 | `syscall.c` | ntdll 扫描 + SSDT |
+| API 接口 | `api.c` | Fast IO DeviceControl |
 
-**关键技术**：
-- Inline Hook (Windows 7+)
-- Minifilter Framework
-- Process/Thread Notify Callbacks
-- 写时复制（Copy-on-Write）
+### 3.2 SbieDll.dll — 用户态 Hook
 
-**详细分析**：参见 [01-kernel-driver-layer.md](modules/01-kernel-driver-layer.md)
+详见 [02-dll-layer.md](modules/02-dll-layer.md)
 
----
+| 类别 | 代表 Hook API | 文件 |
+|------|-------------|------|
+| 文件 | `NtCreateFile`, `NtQueryDirectoryFile` | `file.c` |
+| 注册表 | `NtOpenKey`, `NtSetValueKey` | `key.c` |
+| 进程 | `CreateProcessInternalW` | `proc.c` |
+| IPC | `NtOpenSection`, `NtCreatePort` | `ipc.c` |
+| COM | `CoCreateInstance` | `com.c` |
+| 网络 | `connect`, `getaddrinfo` | `net.c` |
+| 服务 | `OpenSCManagerW` | `scm.c` |
 
-### 3.2 服务层 (SbieSvc.exe)
+### 3.3 SbieSvc.exe — 系统服务
 
-**路径**：`Sandboxie/core/svc/`  
-**代码量**：约 30,000+ 行  
-**核心文件**：30+ 个
+详见 [03-service-layer.md](modules/03-service-layer.md)
 
-**主要职责**：
-- 驱动管理和通信
-- 进程启动和管理
-- 配置文件管理（Sandboxie.ini）
-- 权限提升代理（UAC Proxy）
-- 文件恢复服务
-- COM/GUI/网络等服务代理
+| 组件 | 职责 |
+|------|------|
+| DriverAssist | 驱动加载、LPC 通信、DLL 注入协调 |
+| ProcessServer | 进程启动/终止/挂起 |
+| GuiServer | Job Object、窗口站管理 |
+| FileServer | 文件特权操作代理 |
+| IniServer | 配置文件读写 |
+| ComServer | COM 激活代理 |
 
-**架构特点**：
-- 多服务器架构（15+ 个子服务器）
-- 代理进程模式（权限分离）
-- LPC 通信机制
-- Windows 服务集成
+### 3.4 SandMan.exe — Qt6 GUI
 
-**详细分析**：参见 [02-service-layer.md](modules/02-service-layer.md)
-
----
-
-### 3.3 GUI 层 (SandMan.exe - Sandboxie Plus)
-
-**路径**：`SandboxiePlus/SandMan/`  
-**代码量**：约 50,000+ 行  
-**核心文件**：100+ 个
-
-**主要职责**：
-- 现代化图形用户界面
-- 沙箱管理（创建、删除、配置）
-- 进程监控和控制
-- 文件恢复界面
-- 日志查看和跟踪
-- 快照管理
-- 在线更新
-
-**技术栈**：
-- Qt 5/6 框架
-- MVC 架构
-- 脚本引擎（JavaScript）
-- 插件系统
-
-**详细分析**：参见 [03-gui-layer.md](modules/03-gui-layer.md)
+详见 [04-app-layer.md](modules/04-app-layer.md)
 
 ---
 
-## 4. 核心技术原理
+## 延伸阅读
 
-### 4.1 文件系统虚拟化
+| 主题 | 文档 |
+|------|------|
+| 完整进程生命周期时序图 | [05-process-lifecycle.md](05-process-lifecycle.md) |
+| 文件/注册表/IPC/安全模型详解 | [06-technical-details.md](06-technical-details.md) |
+| 内核驱动层模块分析 | [modules/01-kernel-driver-layer.md](modules/01-kernel-driver-layer.md) |
+| 用户态DLL层模块分析 | [modules/02-dll-layer.md](modules/02-dll-layer.md) |
+| 系统服务层模块分析 | [modules/03-service-layer.md](modules/03-service-layer.md) |
+| 图形界面层模块分析 | [modules/04-app-layer.md](modules/04-app-layer.md) |
 
-**原理**：写时复制（Copy-on-Write）
+### 文件级分析文档（74 个）
 
-```
-真实文件系统:
-C:\Windows\System32\test.txt
+#### 内核驱动层 core/drv/
 
-沙箱文件系统:
-C:\Sandbox\DefaultBox\drive\C\Windows\System32\test.txt
-```
+| 源文件 | 分析文档 |
+|--------|--------|
+| `driver.c` | [drv_driver.c.md](files/drv_driver.c.md) |
+| `api.c` | [drv_api.c.md](files/drv_api.c.md) |
+| `process.c` | [drv_process.c.md](files/drv_process.c.md) |
+| `process_force.c` | [drv_process_force.c.md](files/drv_process_force.c.md) |
+| `process_api.c` | [drv_process_api.c.md](files/drv_process_api.c.md) |
+| `process_low.c` | [drv_process_low.c.md](files/drv_process_low.c.md) |
+| `file.c` | [drv_file.c.md](files/drv_file.c.md) |
+| `file_flt.c` | [drv_file_flt.c.md](files/drv_file_flt.c.md) |
+| `key.c` | [drv_key.c.md](files/drv_key.c.md) |
+| `key_flt.c` | [drv_key_flt.c.md](files/drv_key_flt.c.md) |
+| `ipc.c` | [drv_ipc.c.md](files/drv_ipc.c.md) |
+| `ipc_port.c` | [drv_ipc_port.c.md](files/drv_ipc_port.c.md) |
+| `token.c` | [drv_token.c.md](files/drv_token.c.md) |
+| `thread.c` | [drv_thread.c.md](files/drv_thread.c.md) |
+| `thread_token.c` | [drv_thread_token.c.md](files/drv_thread_token.c.md) |
+| `syscall.c` | [drv_syscall.c.md](files/drv_syscall.c.md) |
+| `wfp.c` | [drv_wfp.c.md](files/drv_wfp.c.md) |
+| `gui.c` | [drv_gui.c.md](files/drv_gui.c.md) |
+| `conf.c` | [drv_conf.c.md](files/drv_conf.c.md) |
+| `hook.c` | [drv_hook.c.md](files/drv_hook.c.md) |
+| `box.c` | [drv_box.c.md](files/drv_box.c.md) |
+| `obj.c` | [drv_obj.c.md](files/drv_obj.c.md) |
+| `verify.c` | [drv_verify.c.md](files/drv_verify.c.md) |
+| `log.c` | [drv_log.c.md](files/drv_log.c.md) |
+| `session.c` | [drv_session.c.md](files/drv_session.c.md) |
+| `dyn_data.c` | [drv_dyn_data.c.md](files/drv_dyn_data.c.md) |
+| `process_force.c` | [drv_process_force.c.md](files/drv_process_force.c.md) |
+| `process_api.c` | [drv_process_api.c.md](files/drv_process_api.c.md) |
+| `process_low.c` | [drv_process_low.c.md](files/drv_process_low.c.md) |
+| `process_hook.c` + `process_util.c` | [drv_process_hook.c.md](files/drv_process_hook.c.md) |
+| `file_ctrl.c` + `file_xlat.c` | [drv_file_ctrl_xlat.c.md](files/drv_file_ctrl_xlat.c.md) |
+| `file_flt.c` | [drv_file_flt.c.md](files/drv_file_flt.c.md) |
+| `key_flt.c` | [drv_key_flt.c.md](files/drv_key_flt.c.md) |
+| `ipc_port.c` | [drv_ipc_port.c.md](files/drv_ipc_port.c.md) |
+| `ipc_lsa.c` + `ipc_sam.c` + `ipc_spl.c` | [drv_ipc_lsa_sam_spl.c.md](files/drv_ipc_lsa_sam_spl.c.md) |
+| `thread_token.c` | [drv_thread_token.c.md](files/drv_thread_token.c.md) |
+| `syscall_open.c` + `syscall_win32.c` + 系列 | [drv_syscall_variants.c.md](files/drv_syscall_variants.c.md) |
+| `conf_expand.c` + `conf_user.c` | [drv_conf_expand.c.md](files/drv_conf_expand.c.md) |
+| `mem.c` + `util.c` | [drv_mem_util.c.md](files/drv_mem_util.c.md) |
+| `dll.c` | [drv_dll.c.md](files/drv_dll.c.md) |
 
-**操作流程**：
-1. **读取**：优先读取沙箱文件，不存在则读取真实文件
-2. **写入**：首次写入时复制文件到沙箱，后续直接写入沙箱文件
-3. **删除**：在沙箱中标记删除，真实文件保持不变
+#### 用户态 DLL 层 core/dll/
+
+| 源文件 | 分析文档 |
+|--------|--------|
+| `dllmain.c` | [dll_dllmain.c.md](files/dll_dllmain.c.md) |
+| `file.c` | [dll_file.c.md](files/dll_file.c.md) |
+| `file_recovery.c` + `file_snapshots.c` | [dll_file_recovery.c.md](files/dll_file_recovery.c.md) |
+| `key.c` | [dll_key.c.md](files/dll_key.c.md) |
+| `proc.c` | [dll_proc.c.md](files/dll_proc.c.md) |
+| `ipc.c` + `ipc_start.c` | [dll_ipc.c.md](files/dll_ipc.c.md) |
+| `gui.c` + gui 系列 | [dll_gui.c.md](files/dll_gui.c.md) |
+| `com.c` | [dll_com.c.md](files/dll_com.c.md) |
+| `net.c` + `dns_filter.c` | [dll_net.c.md](files/dll_net.c.md) |
+| `scm.c` + scm 系列 | [dll_scm.c.md](files/dll_scm.c.md) |
+| `secure.c` | [dll_secure.c.md](files/dll_secure.c.md) |
+| `ldr.c` + `ldr_init.c` | [dll_ldr.c.md](files/dll_ldr.c.md) |
+| `advapi.c` | [dll_advapi.c.md](files/dll_advapi.c.md) |
+| `handle.c` | [dll_handle.c.md](files/dll_handle.c.md) |
+| `sbieapi.c` | [dll_sbieapi.c.md](files/dll_sbieapi.c.md) |
+| `trace.c` | [dll_trace.c.md](files/dll_trace.c.md) |
+| `hook_inst.c` + `hook_tramp.c` | [dll_hook_inst.c.md](files/dll_hook_inst.c.md) |
+| `ipc.c` + `ipc_start.c` | [dll_ipc.c.md](files/dll_ipc.c.md) |
+| `gui.c` + gui 系列 | [dll_gui.c.md](files/dll_gui.c.md) |
+| `com.c` | [dll_com.c.md](files/dll_com.c.md) |
+| `net.c` + `dns_filter.c` | [dll_net.c.md](files/dll_net.c.md) |
+| `scm.c` + scm 系列 | [dll_scm.c.md](files/dll_scm.c.md) |
+| `secure.c` | [dll_secure.c.md](files/dll_secure.c.md) |
+| `ldr.c` + `ldr_init.c` | [dll_ldr.c.md](files/dll_ldr.c.md) |
+| `advapi.c` | [dll_advapi.c.md](files/dll_advapi.c.md) |
+| `handle.c` | [dll_handle.c.md](files/dll_handle.c.md) |
+| `sbieapi.c` | [dll_sbieapi.c.md](files/dll_sbieapi.c.md) |
+| `trace.c` | [dll_trace.c.md](files/dll_trace.c.md) |
+| `callsvc.c` | [dll_callsvc.c.md](files/dll_callsvc.c.md) |
+| `rpcrt.c` | [dll_rpcrt.c.md](files/dll_rpcrt.c.md) |
+| `file_dir.c` + `file_copy.c` + `file_del.c` | [dll_file_dir.c.md](files/dll_file_dir.c.md) |
+| `file_recovery.c` + `file_snapshots.c` | [dll_file_recovery.c.md](files/dll_file_recovery.c.md) |
+| `key_merge.c` + `key_util.c` + `key_del.c` | [dll_key_merge.c.md](files/dll_key_merge.c.md) |
+| `terminal.c` + `userenv.c` | [dll_terminal.c.md](files/dll_terminal.c.md) |
+| `crypt.c` + `cred.c` | [dll_crypt.c.md](files/dll_crypt.c.md) |
+| `custom.c` + `setup.c` + `support.c` | [dll_custom.c.md](files/dll_custom.c.md) |
+| `Win32.c` + `gdi.c` + `sysinfo.c` | [dll_Win32.c.md](files/dll_Win32.c.md) |
+| `obj.c` + `config.c` | [dll_obj.c.md](files/dll_obj.c.md) |
+| `dllmem.c` + `dllpath.c` | [dll_dllmem_dllpath.c.md](files/dll_dllmem_dllpath.c.md) |
+| `lsa.c` + `kernel.c` | [dll_lsa_kernel.c.md](files/dll_lsa_kernel.c.md) |
+
+#### 底层注入 core/low/
+
+| 文件 | 分析文档 |
+|------|--------|
+| `init.c` + `inject.c` + asm | [core_low.md](files/core_low.md) |
+
+#### 系统服务层 core/svc/
+
+| 源文件 | 分析文档 |
+|--------|--------|
+| `main.cpp` | [svc_main.cpp.md](files/svc_main.cpp.md) |
+| `DriverAssist.cpp` + 系列 | [svc_DriverAssist.cpp.md](files/svc_DriverAssist.cpp.md) |
+| `ProcessServer.cpp` | [svc_ProcessServer.cpp.md](files/svc_ProcessServer.cpp.md) |
+| `GuiServer.cpp` | [svc_GuiServer.cpp.md](files/svc_GuiServer.cpp.md) |
+| `fileserver.cpp` | [svc_fileserver.cpp.md](files/svc_fileserver.cpp.md) |
+| `sbieiniserver.cpp` | [svc_sbieiniserver.cpp.md](files/svc_sbieiniserver.cpp.md) |
+| `comserver.cpp` + 系列 | [svc_comserver.cpp.md](files/svc_comserver.cpp.md) |
+| `serviceserver.cpp` | [svc_serviceserver.cpp.md](files/svc_serviceserver.cpp.md) |
+| `iphlpserver.cpp` + `netapiserver.cpp` | [svc_iphlpserver.cpp.md](files/svc_iphlpserver.cpp.md) |
+| `MountManager.cpp` | [svc_MountManager.cpp.md](files/svc_MountManager.cpp.md) |
+| `UserServer.cpp` + `DriverAssistSid.cpp` | [svc_UserServer.cpp.md](files/svc_UserServer.cpp.md) |
+| `queueserver.cpp` + `namedpipeserver.cpp` | [svc_queueserver.cpp.md](files/svc_queueserver.cpp.md) |
+| `terminalserver.cpp` + `EpMapperServer.cpp` | [svc_terminalserver_epmapper.cpp.md](files/svc_terminalserver_epmapper.cpp.md) |
 
 ---
 
-### 4.2 进程隔离机制
+## 4. 关键技术原理
 
-**沙箱化决策流程**：
+### 4.1 系统调用拦截
 
-```
-新进程创建
-    ↓
-父进程是否在沙箱中？
-    ↓ YES
-继承父进程沙箱
-    ↓ NO
-是否在强制进程列表中？
-    ↓ YES
-强制沙箱化
-    ↓ NO
-正常启动（不沙箱化）
-```
+Sandboxie 扫描 ntdll.dll 导出的 Nt 函数机器码，提取 `mov eax, N` 中的系统调用号，建立调用号→内核处理函数映射表：
 
-**隔离机制**：
-- 进程令牌修改（降低权限）
-- 完整性级别降低（High → Low）
-- 资源访问控制（文件、注册表、IPC）
-- 网络过滤
-
----
-
-### 4.3 系统调用拦截
-
-**拦截方式**（Windows 10+）：
-
-```
-用户态应用调用 ntdll!NtCreateFile
-         ↓
-    syscall 指令
-         ↓
-内核态 nt!NtCreateFile
-         ↓
-Sandboxie Hook 检测到调用
-         ↓
-    检查进程是否在沙箱中
-         ↓
-    YES: 调用 File_NtCreateFile (Sandboxie处理)
-         ↓
-    路径重定向 + 权限检查
-         ↓
-    调用原始 NtCreateFile
-         ↓
-    返回结果
-```
-
-**拦截的关键系统调用**：
-- 文件：NtCreateFile, NtOpenFile
-- 注册表：NtCreateKey, NtOpenKey
-- 进程：NtCreateUserProcess
-- 线程：NtCreateThread
-- IPC：NtCreateEvent, NtCreateMutant
-- 端口：NtAlpcConnectPort
-
----
-
-## 5. 典型执行流程
-
-### 5.1 启动沙箱程序完整流程
-
-```
-1. 用户操作
-   用户点击 "在沙箱中运行" notepad.exe
-        ↓
-2. SandMan.exe (GUI)
-   发送启动请求到 SbieSvc
-        ↓
-3. SbieSvc.exe (服务)
-   ProcessServer::RunSandboxed()
-   ├─ 读取沙箱配置
-   ├─ 通知驱动准备启动
-   └─ 调用 CreateProcess
-        ↓
-4. SbieDrv.sys (驱动)
-   Process_NotifyProcessEx() 回调
-   ├─ 检测到新进程创建
-   ├─ 创建 PROCESS 对象
-   ├─ 设置沙箱标记
-   └─ 注入 LowLevel.dll
-        ↓
-5. LowLevel.dll (注入代码)
-   ├─ 加载 SbieDll.dll
-   ├─ 初始化 Hook
-   └─ 跳转到程序入口点
-        ↓
-6. SbieDll.dll (用户态Hook)
-   Dll_InitInjected()
-   ├─ Hook Windows API
-   ├─ 连接到 SbieSvc
-   ├─ 初始化路径转换
-   └─ 设置环境变量
-        ↓
-7. notepad.exe (应用程序)
-   正常运行，所有操作被拦截和重定向
-```
-
----
-
-## 6. 数据流分析
-
-### 6.1 文件写入操作流程
-
-```
-1. 沙箱进程调用 CreateFile("C:\\test.txt", WRITE)
-    ↓
-2. SbieDll.dll Hook 拦截
-    ↓
-3. 调用 NtCreateFile (系统调用)
-    ↓
-4. syscall.c 拦截系统调用
-    ↓
-5. file.c: File_NtCreateFile()
-    ├─ 解析路径: C:\test.txt
-    ├─ 检查访问规则 (conf.c)
-    ├─ 生成沙箱路径: C:\Sandbox\Box\drive\C\test.txt
-    ├─ 检查文件是否存在
-    ├─ 如果不存在，复制原文件（写时复制）
-    └─ 打开沙箱文件
-    ↓
-6. 返回文件句柄给应用程序
-    ↓
-7. 应用程序写入数据到沙箱文件
+```mermaid
+flowchart LR
+    A[ntdll Nt函数存根] -->|读 mov eax N| B[系统调用号 N]
+    B --> C[查 Syscall_Table]
+    C --> D[SYSCALL_ENTRY 描述符]
+    D --> E{有 handler?}
+    E -->|是| F[自定义处理函数]
+    E -->|否| G[原内核服务函数]
+    F -->|可选继续| G
 ```
 
----
+### 4.2 DLL 注入机制
 
-## 7. 安全机制
+```mermaid
+sequenceDiagram
+    participant DRV as SbieDrv
+    participant SVC as SbieSvc
+    participant P as 目标进程
+    participant SDLL as SbieDll.dll
 
-### 7.1 多层防护
-
-```
-┌─────────────────────────────────────┐
-│  应用层防护                          │
-│  - API Hook                         │
-│  - 路径重定向                        │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│  内核层防护                          │
-│  - 系统调用拦截                      │
-│  - 对象访问控制                      │
-│  - 进程隔离                          │
-└──────────────┬──────────────────────┘
-               ↓
-┌─────────────────────────────────────┐
-│  配置层防护                          │
-│  - 访问规则                          │
-│  - 黑白名单                          │
-│  - 网络过滤                          │
-└─────────────────────────────────────┘
+    DRV->>SVC: LPC SVC_INJECT_PROCESS(pid)
+    SVC->>P: WriteProcessMemory(SBIELOW_DATA)
+    SVC->>P: CreateRemoteThread(LowLevel入口)
+    P->>P: LowLevel_Init
+    P->>P: LdrLoadDll(SbieDll.dll)
+    P->>SDLL: Dll_InitInjected() 安装所有Hook
+    SDLL->>DRV: API_INIT_GUI IOCTL
+    DRV->>SVC: 注入完成通知
 ```
 
-### 7.2 安全特性
+### 4.3 写时复制（Copy-on-Write）语义
 
-**1. 进程隔离**
-- 沙箱进程无法访问其他进程
-- 无法注入代码到外部进程
-- 无法读取外部进程内存
+```
+读取：CopyPath 存在 → 读 CopyPath；否则 → 读 TruePath
+写入：确保 CopyPath 父目录存在 → 写入 CopyPath
+删除：在 CopyPath 写入删除标记，枚举时过滤
+枚举：合并 CopyPath + TruePath 结果，过滤已删除项
+```
 
-**2. 文件系统保护**
-- 写操作重定向到沙箱
-- 敏感目录只读访问
-- 可配置访问规则
+### 4.4 令牌降权
 
-**3. 注册表保护**
-- 注册表修改虚拟化
-- 系统注册表只读
-- 隔离应用配置
-
-**4. 网络控制**
-- 基于 WFP 的防火墙
-- IP/端口过滤
-- DNS 重定向
-
-**5. 权限降级**
-- 降低完整性级别
-- 移除管理员权限
-- 限制系统特权
-
----
-
-## 8. 技术栈总览
-
-### 8.1 开发工具
-
-| 工具 | 版本 | 用途 |
-|-----|------|------|
-| Visual Studio | 2019/2022 | 主要 IDE |
-| WDK | 10.0.19041 | 驱动开发 |
-| Qt | 5.15/6.x | GUI 框架 |
-| CMake | 3.x | 构建系统 |
-
-### 8.2 编程语言
-
-| 语言 | 使用场景 |
-|-----|---------|
-| C | 内核驱动 (SbieDrv.sys) |
-| C++ | 服务层 (SbieSvc.exe) |
-| C++/Qt | GUI 层 (SandMan.exe) |
-| JavaScript | 脚本引擎 |
-| Assembly | 底层 Hook 代码 |
-
-### 8.3 关键技术
-
-| 技术 | 应用 |
-|-----|------|
-| WDM (Windows Driver Model) | 内核驱动框架 |
-| Minifilter | 文件系统过滤 |
-| WFP (Windows Filtering Platform) | 网络过滤 |
-| LPC (Local Procedure Call) | 进程间通信 |
-| IOCTL | 驱动通信 |
-| Inline Hook | 系统调用拦截 |
-| IAT Hook | API 拦截 |
-
----
-
-## 9. 项目统计
-
-### 9.1 代码规模
-
-| 模块 | 代码行数 | 文件数 |
-|-----|---------|--------|
-| 内核驱动层 | ~50,000 | 50+ |
-| 服务层 | ~30,000 | 30+ |
-| GUI 层 | ~50,000 | 100+ |
-| 用户态 DLL | ~40,000 | 80+ |
-| **总计** | **~170,000** | **260+** |
-
-### 9.2 支持的系统
-
-| 系统 | 架构 | 状态 |
-|-----|------|------|
-| Windows 7 | x64 | ✅ 支持 |
-| Windows 8/8.1 | x64 | ✅ 支持 |
-| Windows 10 | x64, ARM64 | ✅ 支持 |
-| Windows 11 | x64, ARM64 | ✅ 支持 |
-
-### 9.3 国际化
-
-支持 25+ 种语言：
-- 简体中文、繁体中文
-- 英语、德语、法语、西班牙语
-- 日语、韩语、俄语、波兰语
-- 等等...
-
----
-
-## 10. 关键优势与挑战
-
-### 10.1 技术优势
-
-✅ **高度模块化**：清晰的分层架构，易于维护  
-✅ **跨版本兼容**：支持 Windows 7 到 Windows 11  
-✅ **完善的隔离**：多层防护，安全性高  
-✅ **灵活配置**：细粒度的访问控制  
-✅ **开源透明**：代码公开，社区驱动  
-✅ **功能丰富**：Plus 版本提供大量高级功能
-
-### 10.2 技术挑战
-
-⚠️ **复杂度高**：三层架构，学习曲线陡峭  
-⚠️ **维护成本**：需要跟进 Windows 更新  
-⚠️ **性能开销**：系统调用拦截有性能损耗  
-⚠️ **兼容性**：部分应用可能不兼容  
-⚠️ **测试难度**：需要大量测试覆盖
-
----
-
-## 11. 改进建议
-
-### 11.1 安全性
-
-1. **定期安全审计**：审查系统调用拦截完整性
-2. **增强路径验证**：防止路径逃逸攻击
-3. **完善权限控制**：更细粒度的权限管理
-4. **加密增强**：改进加密沙箱实现
-
-### 11.2 性能
-
-1. **优化热路径**：减少系统调用拦截开销
-2. **增加缓存**：配置、路径解析等缓存
-3. **异步处理**：GUI 异步加载数据
-4. **写时复制优化**：增量复制大文件
-
-### 11.3 可维护性
-
-1. **增加单元测试**：提高代码质量
-2. **完善文档**：增加开发者文档
-3. **减少全局变量**：封装为单例或类成员
-4. **统一错误处理**：标准化错误处理机制
-
-### 11.4 用户体验
-
-1. **简化配置**：减少复杂的配置选项
-2. **改进向导**：更友好的新手引导
-3. **增强提示**：更清晰的错误消息
-4. **性能监控**：显示沙箱资源使用情况
-
----
-
-## 12. 未来展望
-
-### 12.1 技术方向
-
-🔮 **容器化技术**：集成 Windows 容器技术  
-🔮 **云同步**：沙箱配置云同步  
-🔮 **AI 辅助**：智能威胁检测  
-🔮 **跨平台**：探索 Linux/macOS 支持  
-🔮 **微服务架构**：服务层微服务化
-
-### 12.2 功能扩展
-
-🔮 **高级分析**：行为分析和威胁情报  
-🔮 **自动化测试**：沙箱自动化测试框架  
-🔮 **企业功能**：集中管理和策略部署  
-🔮 **性能优化**：进一步降低性能开销  
-🔮 **兼容性改进**：支持更多应用程序
-
----
-
-## 13. 结论
-
-Sandboxie 是一个技术先进、架构清晰、功能完善的沙箱隔离系统。通过三层架构（内核驱动、系统服务、图形界面），实现了强大的进程隔离和资源虚拟化。
-
-**核心价值**：
-- 🛡️ **安全隔离**：有效防止恶意软件和不受信任的程序
-- 🔒 **隐私保护**：保护用户数据不被泄露
-- 🧪 **测试环境**：安全的软件测试环境
-- 🌐 **安全浏览**：隔离的网页浏览环境
-
-**适用场景**：
-- 运行不受信任的软件
-- 测试新软件
-- 安全浏览网页
-- 保护隐私数据
-- 开发和调试
-
-Sandboxie 的开源为安全社区提供了宝贵的学习资源，其技术实现对理解 Windows 内核、系统调用拦截、进程隔离等技术具有重要参考价值。
-
----
-
-**报告完成时间**：2026-03-05  
-**分析方法**：自底向上分层分析  
-**分析深度**：文件级 → 模块级 → 项目级  
-**总页数**：本报告 + 3 个模块分析 + 4 个文件分析
+```mermaid
+flowchart TD
+    A[Token_ReplacePrimary] --> B[打开进程主令牌]
+    B --> C{drop_rights=y?}
+    C -->|是| D[删除 Admin/PowerUsers 组]
+    C -->|否| E[保留组]
+    D --> F[添加受限SID]
+    E --> F
+    F --> G[修改 DACL]
+    G --> H[Vista+: 设置低完整性级别]
+    H --> I[ZwSetInformationProcess 替换令牌]
+```
