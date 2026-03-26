@@ -279,6 +279,14 @@ SB_STATUS CNewBoxWizard::TryToCreateBox()
             if (field("coverBoxedWindows").toBool())
                 pBox->SetBool("CoverBoxedWindows", true);
 
+            // === 默认强制添加的开放路径 ===
+            // OpenFilePath: 允许沙箱内程序访问指定的可执行文件或路径
+            pBox->AppendText("OpenFilePath", "%SystemRoot%\\System32\\*");
+            pBox->AppendText("OpenFilePath", "%ProgramFiles%\\*");
+            // OpenKeyPath: 允许沙箱内程序访问指定的注册表路径
+            pBox->AppendText("OpenKeyPath", "HKCU\\Software\\Classes\\*");
+            // =====================================
+
             if (!Password.isEmpty())
                 pBox->ImBoxCreate(ImageSize / 1024, Password);
 

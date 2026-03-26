@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.anthropic.com)",
+      "WebFetch(domain:openai.com)",
+      "WebSearch",
+      "Bash(wc -l F:/Project/AI/sanbox/Sandboxie/.cursor/skills/doc-init/SKILL.md F:/Project/AI/sanbox/Sandboxie/.cursor/skills/doc-init/references/*.md F:/Project/AI/sanbox/Sandboxie/.cursor/skills/doc-init/scripts/*.sh)",
+      "Bash(cp -r F:/Project/AI/sanbox/Sandboxie/.cursor/skills/doc-init/references F:/Project/AI/sanbox/Sandboxie/.cursor/skills/gstack/doc-init/references)",
+      "Bash(cp -r F:/Project/AI/sanbox/Sandboxie/.cursor/skills/doc-init/scripts F:/Project/AI/sanbox/Sandboxie/.cursor/skills/gstack/doc-init/scripts)",
+      "Bash(bun run:*)",
+      "Read(//c/Users/tao/.bun/bin/**)",
+      "Read(//c/Users/tao/.bun//**)",
+      "Read(//c/Users/tao/.bun/**)",
+      "Read(//c/Users/tao/**)",
+      "Bash(find /c/Users/tao/.bun -name bun*)",
+      "Bash(cmd.exe /c \"where bun\")",
+      "Bash(powershell.exe -Command \"Get-Command bun -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(grep -n \"^# \\\\|^## Preamble\\\\|^---$\\\\|AUTO-GENERATED\" \"F:/Project/AI/sanbox/Sandboxie/.cursor/skills/gstack/retro/SKILL.md\")"
+    ]
+  }
+}

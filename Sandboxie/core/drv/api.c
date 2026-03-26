@@ -30,6 +30,7 @@
 #include "session.h"
 #include "common/my_version.h"
 #include "log_buff.h"
+#include "conf.h"
 #define KERNEL_MODE
 #include "verify.h"
 #include "dyn_data.h"
@@ -1252,6 +1253,15 @@ _FX NTSTATUS Api_QueryDriverInfo(PROCESS* proc, ULONG64* parms)
                 *((ULONG*)args->info_data.val) = (ULONG)(Verify_CertInfo.State & 0xFFFFFFFF); // drop optional data
             else
                 status = STATUS_BUFFER_TOO_SMALL;
+        }
+        else if (args->info_class.val == 1) {
+
+            // return the current configuration version counter
+            // so sandboxed processes can detect config changes
+
+            ULONG *data = args->info_data.val;
+            ProbeForWrite(data, sizeof(ULONG), sizeof(ULONG));
+            *data = Conf_Version;
         }
         else if (args->info_class.val == -2) {
 

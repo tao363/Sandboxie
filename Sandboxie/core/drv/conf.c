@@ -164,6 +164,8 @@ static NTSTATUS Conf_Update(CONF_DATA *data,
 static CONF_DATA Conf_Data;
 static PERESOURCE Conf_Lock = NULL;
 
+volatile ULONG Conf_Version = 0;
+
 static const WCHAR *Conf_GlobalSettings   = L"GlobalSettings";
 static const WCHAR *Conf_UserSettings_    = L"UserSettings_";
 static const WCHAR *Conf_Template_        = L"Template_";
@@ -498,6 +500,9 @@ _FX NTSTATUS Conf_Read(ULONG session_id)
     //
 
     Log_LogMessageEvents = Conf_Get_Boolean(NULL, L"LogMessageEvents", 0, FALSE);
+
+    if (NT_SUCCESS(status))
+        InterlockedIncrement((volatile LONG *)&Conf_Version);
 
     return status;
 }

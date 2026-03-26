@@ -371,6 +371,9 @@ static P_NtQueryVolumeInformationFile
 //---------------------------------------------------------------------------
 
 
+static volatile ULONG File_ConfVersion = 0;
+
+
 // Windows 2000 and Windows XP name for the LanmanRedirector device
 static const WCHAR *File_Redirector = L"\\device\\lanmanredirector\\";
 static const ULONG File_RedirectorLen = 25;
@@ -2321,6 +2324,18 @@ _FX NTSTATUS File_GetName_FromFileId(
 
 _FX ULONG File_MatchPath(const WCHAR *path, ULONG *FileFlags)
 {
+    ULONG drv_ver = 0;
+    if (NT_SUCCESS(SbieApi_QueryDrvInfo(1, &drv_ver, sizeof(drv_ver)))) {
+        ULONG cached = InterlockedCompareExchange((volatile LONG *)&File_ConfVersion, drv_ver, drv_ver);
+        if (cached != drv_ver) {
+            if (InterlockedCompareExchange((volatile LONG *)&File_ConfVersion, drv_ver, cached) == cached) {
+                __declspec(align(8)) ULONG64 parms[API_NUM_ARGS];
+                memset(parms, 0, sizeof(parms));
+                parms[0] = API_REFRESH_FILE_PATH_LIST;
+                SbieApi_Ioctl(parms);
+            }
+        }
+    }
     return File_MatchPath2(path, FileFlags, TRUE, TRUE);
 }
 
