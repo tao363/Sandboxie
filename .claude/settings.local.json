@@ -15,7 +15,14 @@
       "Bash(find /c/Users/tao/.bun -name bun*)",
       "Bash(cmd.exe /c \"where bun\")",
       "Bash(powershell.exe -Command \"Get-Command bun -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
-      "Bash(grep -n \"^# \\\\|^## Preamble\\\\|^---$\\\\|AUTO-GENERATED\" \"F:/Project/AI/sanbox/Sandboxie/.cursor/skills/gstack/retro/SKILL.md\")"
+      "Bash(grep -n \"^# \\\\|^## Preamble\\\\|^---$\\\\|AUTO-GENERATED\" \"F:/Project/AI/sanbox/Sandboxie/.cursor/skills/gstack/retro/SKILL.md\")",
+      "Bash(ls -d F:/Project/AI/sanbox/Sandboxie/.cursor/skills/gstack/*/)",
+      "Bash(find F:/Project/AI/sanbox/Sandboxie/.cursor/skills/gstack -type f -name *.md -o -name *.tmpl -o -name *.json -o -name *.yaml -o -name *.yml -o -name *.ts -o -name *.js)",
+      "Bash(ls:*)",
+      "Bash(# Copy doc-init to .trae mirror\ncp -r \"F:/Project/AI/sanbox/Sandboxie/.cursor/skills/gstack/doc-init\" \"F:/Project/AI/sanbox/Sandboxie/.trae/skills/gstack/doc-init\"\necho \"Copied. Verifying:\"\nls -la \"F:/Project/AI/sanbox/Sandboxie/.trae/skills/gstack/doc-init/\")",
+      "Bash(git add:*)",
+      "Bash(git rm:*)",
+      "Bash(rm -rf .cursor/skills/gstack/.git .trae/skills/gstack/.git)"
     ]
   }
 }
