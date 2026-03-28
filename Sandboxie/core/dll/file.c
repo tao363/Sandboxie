@@ -31,6 +31,7 @@
 #include "core/svc/UserWire.h"
 #include "debug.h"
 #include "trace.h"
+#include "core/drv/api_defs.h"
 
 //---------------------------------------------------------------------------
 // Defines
