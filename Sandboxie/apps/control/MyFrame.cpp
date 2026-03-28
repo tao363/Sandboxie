@@ -1126,7 +1126,6 @@ void CMyFrame::OnCmdHelpMigrate()
 
 void CMyFrame::OnCmdHelpGetCert()
 {
-    CRunBrowser x(this, L"https://sandboxie-plus.com/go.php?to=sbie-get-cert");
 }
 
 
@@ -1134,11 +1133,8 @@ void CMyFrame::OnCmdHelpGetCert()
 // OnCmdHelpSetCert
 //---------------------------------------------------------------------------
 
-void ApplyCertificate();
-
 void CMyFrame::OnCmdHelpSetCert()
 {
-    ApplyCertificate();
 }
 
 
