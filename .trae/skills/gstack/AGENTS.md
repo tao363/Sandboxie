@@ -22,6 +22,7 @@ Skills live in `.agents/skills/`. Invoke them by name (e.g., `/office-hours`).
 | `/qa-only` | Same as /qa but report only — no code changes. |
 | `/ship` | Run tests, review, push, open PR. One command. |
 | `/document-release` | Update all docs to match what you just shipped. |
+| `/doc-init` | Initialize or maintain a structured `docs/` knowledge base with freshness tracking. |
 | `/retro` | Weekly retro with per-person breakdowns and shipping streaks. |
 | `/browse` | Headless browser — real Chromium, real clicks, ~100ms/command. |
 | `/setup-browser-cookies` | Import cookies from your real browser for authenticated testing. |

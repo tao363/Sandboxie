@@ -244,6 +244,12 @@ Cross-reference the diff against documentation files. For each `.md` file in the
 
 This is informational only — never critical. The fix action is `/document-release`.
 
+3. Check if `docs/.doc-meta.json` exists. If it does, read it and look for entries whose
+   associated code paths overlap with the diff. For each stale entry, flag as INFORMATIONAL:
+   "Knowledge base may be stale: [doc path] — associated code changed in this branch.
+   Consider running `/doc-init` (garden mode)."
+   If `.doc-meta.json` does not exist, skip this sub-step silently.
+
 If no documentation files exist, skip this step silently.
 
 ---

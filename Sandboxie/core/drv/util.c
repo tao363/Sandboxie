@@ -563,15 +563,7 @@ void InitFwUuid();
 
 _FX NTSTATUS MyValidateCertificate(void)
 {
-    if(!*g_uuid_str)
-        InitFwUuid();
-
-    NTSTATUS status = KphValidateCertificate();
-
-    if (status == STATUS_ACCOUNT_EXPIRED)
-        status = STATUS_SUCCESS;
-
-    return status;
+    return KphValidateCertificate();
 }
 
 

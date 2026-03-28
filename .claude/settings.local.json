@@ -22,7 +22,10 @@
       "Bash(# Copy doc-init to .trae mirror\ncp -r \"F:/Project/AI/sanbox/Sandboxie/.cursor/skills/gstack/doc-init\" \"F:/Project/AI/sanbox/Sandboxie/.trae/skills/gstack/doc-init\"\necho \"Copied. Verifying:\"\nls -la \"F:/Project/AI/sanbox/Sandboxie/.trae/skills/gstack/doc-init/\")",
       "Bash(git add:*)",
       "Bash(git rm:*)",
-      "Bash(rm -rf .cursor/skills/gstack/.git .trae/skills/gstack/.git)"
+      "Bash(rm -rf .cursor/skills/gstack/.git .trae/skills/gstack/.git)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(xargs wc:*)"
     ]
   }
 }

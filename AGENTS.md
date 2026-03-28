@@ -29,92 +29,72 @@ SandMan.exe (Qt GUI)    ← Plus 版管理界面
 
 | 文档 | 内容 | 何时阅读 |
 |------|------|----------|
-| [docs/architecture/overview.md](docs/architecture/overview.md) | 架构总览、系统图、组件清单 | 首次了解项目 |
-| [docs/architecture/components.md](docs/architecture/components.md) | 各组件详细接口和数据结构 | 修改特定组件 |
-| [docs/architecture/dependency-rules.md](docs/architecture/dependency-rules.md) | 分层依赖规则 | 新增模块或修改依赖 |
-| [docs/architecture/build-system.md](docs/architecture/build-system.md) | 构建系统完整说明 | 构建项目 |
-| [docs/architecture/security-model.md](docs/architecture/security-model.md) | 安全边界和敏感区域 | 修改安全相关代码 |
-| [docs/guides/coding-conventions.md](docs/guides/coding-conventions.md) | 编码约定 | 编写代码 |
-| [docs/guides/getting-started.md](docs/guides/getting-started.md) | 新贡献者入门指南 | 开始贡献 |
-| [docs/guides/testing-guide.md](docs/guides/testing-guide.md) | 测试方法和策略 | 测试代码 |
-| [docs/beliefs.md](docs/beliefs.md) | 核心信念和工程原则 | 面临设计决策 |
-| [docs/quality.md](docs/quality.md) | 各域质量评级 | 了解项目现状 |
-| [docs/domain-map.md](docs/domain-map.md) | 业务域划分 | 理解模块边界 |
-| [docs/glossary.md](docs/glossary.md) | 项目术语表 | 理解专业术语 |
-| [docs/plans/tech-debt.md](docs/plans/tech-debt.md) | 技术债务跟踪 | 规划改进工作 |
+| **[架构概览](docs/architecture/overview.md)** | 系统架构、组件清单、数据流 | 理解整体设计 |
+| **[组件详解](docs/architecture/components.md)** | 各组件职责、接口、关键文件 | 修改特定组件 |
+| **[依赖规则](docs/architecture/dependency-rules.md)** | 分层架构、依赖方向、违规示例 | 添加新代码 |
+| **[构建系统](docs/architecture/build-system.md)** | 编译环境、构建步骤、常见问题 | 编译项目 |
+| **[安全模型](docs/architecture/security-model.md)** | 安全边界、威胁模型、敏感代码 | 安全相关修改 |
 
 ---
 
-## 核心命令
+## 开发指南
 
-### 构建
-
-```powershell
-# 构建核心组件
-msbuild Sandboxie\Sandbox.sln /p:Configuration=Release /p:Platform=x64
-
-# 构建 Plus GUI
-msbuild SandboxiePlus\SandboxiePlus.sln /p:Configuration=Release /p:Platform=x64
-```
-
-### 测试
-
-```powershell
-# 启用测试签名模式（需要管理员权限）
-bcdedit /set testsigning on
-
-# 使用 DebugView 查看日志
-# 下载: https://docs.microsoft.com/en-us/sysinternals/downloads/debugview
-```
-
-### 代码质量
-
-```powershell
-# 使用 Visual Studio 代码分析
-msbuild Sandbox.sln /p:RunCodeAnalysis=true
-```
+| 文档 | 内容 | 何时阅读 |
+|------|------|----------|
+| **[入门指南](docs/guides/getting-started.md)** | 环境配置、首次编译、调试方法 | 新贡献者必读 |
+| **[编码规范](docs/guides/coding-conventions.md)** | 代码风格、命名约定、注释规范 | 提交代码前 |
+| **[测试指南](docs/guides/testing-guide.md)** | 测试策略、测试方法、覆盖率 | 添加测试 |
 
 ---
 
-## 关键规则
+## 治理文档
 
-1. **必须通过 API 层访问核心功能** — GUI 禁止直接调用驱动
-2. **必须验证所有来自沙箱进程的数据** — 沙箱进程不可信
-3. **必须使用安全字符串函数** — 禁止 `strcpy`, `sprintf` 等
-4. **内核代码禁止使用标准 C 运行时** — 使用内核专用函数
-5. **敏感数据使用后必须清零** — 密码、密钥等
-6. **禁止绕过权限检查** — 安全关键路径
-7. **禁止在日志中输出敏感数据** — 密码、密钥等
-8. **修改驱动代码需要安全审查** — 高风险区域
+| 文档 | 内容 | 何时阅读 |
+|------|------|----------|
+| **[核心理念](docs/beliefs.md)** | 工程原则、决策依据 | 理解项目价值观 |
+| **[质量评级](docs/quality.md)** | 各域质量评分、改进方向 | 评估代码质量 |
+| **[域地图](docs/domain-map.md)** | 业务域划分、边界定义 | 跨域修改 |
+| **[术语表](docs/glossary.md)** | 项目术语、缩写解释 | 阅读代码时 |
 
 ---
 
-## 高风险区域
+## 计划与决策
 
-修改以下区域需要额外谨慎，建议使用 `/careful` 或 `/freeze`：
-
-| 区域 | 路径 | 风险 |
-|------|------|------|
-| 内核驱动 | `Sandboxie/core/drv/` | 系统崩溃、安全漏洞 |
-| Token 创建 | `Sandboxie/core/drv/token.c` | 权限提升 |
-| 系统调用拦截 | `Sandboxie/core/drv/syscall*.c` | 隔离失效 |
-| 加密实现 | `SandboxieTools/ImBox/dc/` | 数据泄露 |
-| 注入代码 | `Sandboxie/core/dll/hook*.c` | 进程崩溃 |
+| 目录 | 内容 | 何时阅读 |
+|------|------|----------|
+| **[docs/design/](docs/design/)** | 设计文档、RFC | 设计新功能 |
+| **[docs/plans/](docs/plans/)** | 执行计划、进度追踪 | 了解进行中工作 |
+| **[docs/adr/](docs/adr/)** | 架构决策记录 | 理解历史决策 |
 
 ---
 
-## 提交规范
+## 关键源码路径
 
-```
-<type>(<scope>): <subject>
-
-类型: feat | fix | docs | style | refactor | test | chore
-范围: drv | dll | svc | gui | api | tools
-```
+| 组件 | 路径 | 核心文件 |
+|------|------|----------|
+| 内核驱动 | `Sandboxie/core/drv/` | `driver.c`, `syscall.c` |
+| 系统服务 | `Sandboxie/core/svc/` | `services.c`, `pipe.c` |
+| 注入 DLL | `Sandboxie/core/dll/` | `dllmain.c`, `hook.c` |
+| Qt GUI | `Sandboxie/plus/` | `SandMan.cpp`, `Views/` |
+| 加密沙箱 | `Sandboxie/core/drv/crypto/` | `crypto.c` |
 
 ---
 
-## 相关技能
+## 快速任务指南
 
-- `/sandboxie-analyzer` — 深度分析 Sandboxie 代码
-- `/sandboxie-modifier` — 修改和测试 Sandboxie 核心模块
+| 任务 | 起点 |
+|------|------|
+| 修复 Bug | [组件详解](docs/architecture/components.md) → 定位组件 → 阅读源码 |
+| 添加功能 | [设计模板](docs/design/_template.md) → 写设计 → [计划模板](docs/plans/_template.md) |
+| 理解架构 | [架构概览](docs/architecture/overview.md) → [依赖规则](docs/architecture/dependency-rules.md) |
+| 安全审计 | [安全模型](docs/architecture/security-model.md) → 敏感代码区域 |
+| 新贡献者 | [入门指南](docs/guides/getting-started.md) → [编码规范](docs/guides/coding-conventions.md) |
+
+---
+
+## 技术债务
+
+详见 [技术债务跟踪](docs/plans/tech-debt.md)。高优先级项：
+- TD-001: 缺少单元测试框架
+- TD-002: 内核驱动缺少安全审计
+- TD-003: 加密沙箱缺少安全审计

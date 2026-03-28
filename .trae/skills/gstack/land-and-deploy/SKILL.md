@@ -901,6 +901,7 @@ After the deploy report, suggest relevant follow-ups:
 - If a production URL was verified: "Run `/canary <url> --duration 10m` for extended monitoring."
 - If performance data was collected: "Run `/benchmark <url>` for a deep performance audit."
 - "Run `/document-release` to update project documentation."
+- If `docs/.doc-meta.json` exists: "Run `/doc-init` (garden mode) to sync the knowledge base with deployed changes."
 
 ---
 

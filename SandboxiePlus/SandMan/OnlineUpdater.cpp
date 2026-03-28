@@ -218,122 +218,6 @@ SB_PROGRESS COnlineUpdater::GetUpdates(QObject* receiver, const char* member, co
 
 	return pProgress;
 
-	
-
-	/* 原始代码已禁用
-
-	QUrlQuery Query;
-
-	Query.addQueryItem("action", "update");
-
-	Query.addQueryItem("software", "sandboxie-plus");
-
-	//QString Branch = theConf->GetString("Options/ReleaseBranch");
-
-	//if (!Branch.isEmpty())
-
-	//	Query.addQueryItem("branch", Branch);
-
-	//Query.addQueryItem("version", theGUI->GetVersion());
-
-	//Query.addQueryItem("version", QString::number(VERSION_MJR) + "." + QString::number(VERSION_MIN) + "." + QString::number(VERSION_REV) + "." + QString::number(VERSION_UPD));
-
-#ifdef INSIDER_BUILD
-
-	Query.addQueryItem("version", QString(__DATE__));
-
-#else
-
-	Query.addQueryItem("version", QString::number(VERSION_MJR) + "." + QString::number(VERSION_MIN) + "." + QString::number(VERSION_REV));
-
-#endif
-
-	Query.addQueryItem("system", "windows-" + QSysInfo::kernelVersion() + "-" + QSysInfo::currentCpuArchitecture());
-
-	Query.addQueryItem("language", QLocale::system().name());
-
-#ifdef _DEBUG
-
-	Query.addQueryItem("debug", "1");
-
-#endif
-
-
-
-	QString UpdateKey = GetArguments(g_Certificate, L'\n', L':').value("UPDATEKEY");
-
-	//if (UpdateKey.isEmpty())
-
-	//	UpdateKey = theAPI->GetGlobalSettings()->GetText("UpdateKey"); // theConf->GetString("Options/UpdateKey");
-
-	//if (UpdateKey.isEmpty())
-
-	//	UpdateKey = "00000000000000000000000000000000";
-
-	Query.addQueryItem("update_key", UpdateKey);
-
-	
-
-	quint64 RandID = COnlineUpdater::GetRandID();
-
-	quint32 Hash = theAPI->GetUserSettings()->GetName().mid(13).toInt(NULL, 16);
-
-	QString HashKey = QString::number(Hash, 16).rightJustified(8, '0').toUpper() + "-" + QString::number(RandID, 16).rightJustified(16, '0').toUpper();
-
-	Query.addQueryItem("hash_key", HashKey);
-
-
-
-	if (Params.contains("channel")) 
-
-		Query.addQueryItem("channel", Params["channel"].toString());
-
-	else {
-
-		QString ReleaseChannel = theConf->GetString("Options/ReleaseChannel", "stable");
-
-		Query.addQueryItem("channel", ReleaseChannel);
-
-	}
-
-
-
-	Query.addQueryItem("auto", Params["manual"].toBool() ? "0" : "1");
-
-
-
-	if (!Params["manual"].toBool()) {
-
-		int UpdateInterval = theConf->GetInt("Options/UpdateInterval", UPDATE_INTERVAL); // in seconds
-
-		Query.addQueryItem("interval", QString::number(UpdateInterval));
-
-	}
-
-
-
-#ifdef _DEBUG
-
-	QString Test = Query.toString();
-
-#endif
-
-
-
-	QUrl Url("https://sandboxie-plus.com/update.php");
-
-	Url.setQuery(Query);
-
-
-
-	CUpdatesJob* pJob = new CGetUpdatesJob(Params, this);
-
-	StartJob(pJob, Url);
-
-	QObject::connect(pJob, SIGNAL(UpdateData(const QVariantMap&, const QVariantMap&)), receiver, member, Qt::QueuedConnection);
-
-	return SB_PROGRESS(OP_ASYNC, pJob->m_pProgress);
-
 }
 
 
@@ -372,71 +256,6 @@ void CGetUpdatesJob::Finish(QNetworkReply* pReply)
 
 
 
-		if (Data.contains("cbl"))
-
-		{
-
-			QVariantMap CertBL = Data["cbl"].toMap();
-
-			QByteArray BlockList0 = CertBL["list"].toByteArray();
-
-			QByteArray BlockListSig0 = QByteArray::fromHex(CertBL["sig"].toByteArray());
-
-
-
-			if (theAPI->TestSignature(BlockList0, BlockListSig0))
-
-			{
-
-				std::string BlockList;
-
-				BlockList.resize(qMax(0x10000, BlockList0.size()), 0); // 64 kb should be enough
-
-				static quint32 BlockListLen = 0;
-
-				if (BlockListLen == 0) {
-
-					SB_STATUS Status = theAPI->GetSecureParam("CertBlockList", (void*)BlockList.c_str(), BlockList.size(), &BlockListLen, true);
-
-					//BlockList.resize(BlockListLen);
-
-					if (Status.IsError()) // error
-
-						BlockListLen = 0;
-
-				}
-
-
-
-				if (BlockListLen < BlockList0.size())
-
-				{
-
-					theAPI->SetSecureParam("CertBlockList", BlockList0, BlockList0.size());
-
-					theAPI->SetSecureParam("CertBlockListSig", BlockListSig0, BlockListSig0.size());
-
-					BlockListLen = BlockList0.size();
-
-					//BlockList = BlockList0;
-
-
-
-					theGUI->ReloadCert();
-
-				}
-
-			}
-
-			else
-
-			{
-
-				Q_ASSERT(0);
-
-			}
-
-		}
 
 
 
@@ -594,109 +413,9 @@ SB_PROGRESS COnlineUpdater::GetSupportCert(const QString& Serial, QObject* recei
 
 	return pProgress;
 
-	
-
-	/* 原始代码已禁用
-
-	QString UpdateKey = Params["key"].toString();
-
-
-
-	QUrlQuery Query;
-
-
-
-	bool bHwId = false;
-
-	if (!Serial.isEmpty()) {
-
-		Query.addQueryItem("SN", Serial);
-
-		if (Serial.length() > 5 && Serial.at(4).toUpper() == 'N')
-
-			bHwId = true;
-
-	}
-
-
-
-	if(!UpdateKey.isEmpty())
-
-		Query.addQueryItem("UpdateKey", UpdateKey);
-
-
-
-	quint64 RandID = COnlineUpdater::GetRandID();
-
-	quint32 Hash = theAPI->GetUserSettings()->GetName().mid(13).toInt(NULL, 16);
-
-	QString HashKey = QString::number(Hash, 16).rightJustified(8, '0').toUpper() + "-" + QString::number(RandID, 16).rightJustified(16, '0').toUpper();
-
-	Query.addQueryItem("HashKey", HashKey);
-
-
-
-	if (Serial.isEmpty() && Params.contains("Name")) { // Request eval Key
-
-		Query.addQueryItem("Name", Params["Name"].toString()); // for cert
-
-		Query.addQueryItem("eMail", Params["eMail"].toString());
-
-		bHwId = true;
-
-	}
-
-
-
-	if (IsLockRequired()) {
-
-		Query.addQueryItem("LR", "1");
-
-		bHwId = true;
-
-	}
-
-
-
-	if (bHwId) {
-
-		wchar_t uuid_str[40];
-
-		theAPI->GetDriverInfo(-2, uuid_str, sizeof(uuid_str));
-
-		Query.addQueryItem("HwId", QString::fromWCharArray(uuid_str));
-
-	}
-
-
-
-#ifdef _DEBUG
-
-	QString Test = Query.toString();
-
-#endif
-
-
-
-	QUrl Url("https://sandboxie-plus.com/get_cert.php?");
-
-	Url.setQuery(Query);
-
-
-
-	CUpdatesJob* pJob = new CGetCertJob(Params, this);
-
-	StartJob(pJob, Url);
-
-	QObject::connect(pJob, SIGNAL(Certificate(const QByteArray&, const QVariantMap&)), receiver, member, Qt::QueuedConnection);
-
-	return SB_PROGRESS(OP_ASYNC, pJob->m_pProgress);
-
 }
 
 
-
-extern "C" NTSTATUS NTAPI NtQueryInstallUILanguage(LANGID* LanguageId);
 
 
 
@@ -704,69 +423,11 @@ bool COnlineUpdater::IsLockRequired()
 
 {
 
-	if (theConf->GetBool("Debug/LockedRegion", false))
-
-		return true;
-
-
-
-	if (g_CertInfo.lock_req)
-
-		return true;
-
-
-
-	LANGID LangID = 0;
-
-	if ((NtQueryInstallUILanguage(&LangID) == 0) && (LangID == 0x0804))
-
-		return true;
-
-
-
-	if (theGUI->m_LanguageId == 0x0804)
-
-		return true;
-
-
-
 	return false;
 
 }
 
 
-
-void CGetCertJob::Finish(QNetworkReply* pReply)
-
-{
-
-	QByteArray Reply = pReply->readAll();
-
-
-
-	m_pProgress->Finish(SB_OK);
-
-
-
-	if (Reply.left(1) == "{") { // error
-
-
-
-		QVariantMap Data = QJsonDocument::fromJson(Reply).toVariant().toMap();
-
-		Reply.clear();
-
-
-
-		m_Params["error"] = Data["errorMsg"].toString();
-
-	}
-
-	
-
-	emit Certificate(Reply, m_Params);
-
-}
 
 
 
@@ -868,14 +529,6 @@ QString COnlineUpdater::GetOnNewUpdateOption() const
 
 
 
-	QString ReleaseChannel = theConf->GetString("Options/ReleaseChannel", "stable");
-
-	if (ReleaseChannel != "preview" && (!g_CertInfo.active || g_CertInfo.expired)) // without active cert, allow revisions for preview channel
-
-		return "ignore"; // this service requires a valid certificate
-
-
-
 	return OnNewUpdate;
 
 }
@@ -890,22 +543,6 @@ QString COnlineUpdater::GetOnNewReleaseOption() const
 
 
 
-	if (OnNewRelease == "install" || OnNewRelease == "download") {
-
-		QString ReleaseChannel = theConf->GetString("Options/ReleaseChannel", "stable");
-
-		if (ReleaseChannel != "preview" && (!g_CertInfo.active || g_CertInfo.expired)) // without active cert, allow automated updates only for preview channel
-
-			return "notify"; // this service requires a valid certificate
-
-	}
-
-
-
-	//if ((g_CertInfo.active && g_CertInfo.expired) && OnNewRelease == "install")
-
-	//	return "download"; // disable auto update on an active but expired personal certificate
-
 	return OnNewRelease;
 
 }
@@ -916,47 +553,9 @@ bool COnlineUpdater::ShowCertWarningIfNeeded()
 
 {
 
-	//
+	// Cert checking disabled - always allow updates
 
-	// This function checks if this installation uses a expired personal
-
-	// certificate which is active for the current build
-
-	// in which case it shows a warning that updating to the latest build 
-
-	// will deactivate the certificate
-
-	//
-
-
-
-	if (!(g_CertInfo.active && g_CertInfo.expired))
-
-		return true;
-
-
-
-	QString Message = tr("Your Sandboxie-Plus supporter certificate is expired, however for the current build you are using it remains active, when you update to a newer build exclusive supporter features will be disabled.\n\n"
-
-		"Do you still want to update?");
-
-	int Ret = QMessageBox("Sandboxie-Plus", Message, QMessageBox::Warning, QMessageBox::Yes, QMessageBox::No | QMessageBox::Escape | QMessageBox::Default, QMessageBox::Cancel, theGUI).exec();
-
-	if (Ret == QMessageBox::Cancel) {
-
-		QTimer::singleShot(10, this, [=] {
-
-			theConf->DelValue("Updater/InstallerPath");
-
-			theConf->DelValue("Updater/UpdateVersion");
-
-			theGUI->UpdateLabel();
-
-		});
-
-	}
-
-	return Ret == QMessageBox::Yes;
+	return true;
 
 }
 
@@ -1034,7 +633,7 @@ void COnlineUpdater::Process()
 
 	}
 
-	else if (g_CertInfo.active)
+	else
 
 	{
 
@@ -1328,7 +927,7 @@ bool COnlineUpdater::HandleUpdate()
 
 
 
-	bool bAllowAuto = g_CertInfo.active && !g_CertInfo.expired; // To use automatic updates a valid certificate is required
+	bool bAllowAuto = true; // Cert check removed - always allow automatic updates
 
 
 

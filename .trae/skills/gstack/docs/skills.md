@@ -17,6 +17,7 @@ Detailed guides for every gstack skill — philosophy, workflow, and examples.
 | [`/ship`](#ship) | **Release Engineer** | Sync main, run tests, audit coverage, push, open PR. Bootstraps test frameworks if you don't have one. One command. |
 | [`/cso`](#cso) | **Chief Security Officer** | OWASP Top 10 + STRIDE threat modeling security audit. Scans for injection, auth, crypto, and access control issues. |
 | [`/document-release`](#document-release) | **Technical Writer** | Update all project docs to match what you just shipped. Catches stale READMEs automatically. |
+| [`/doc-init`](#doc-init) | **Context Engineer** | Initialize or maintain a structured `docs/` knowledge base with architecture docs, freshness tracking, and navigation index. Two modes: init (first-time) and garden (incremental). |
 | [`/retro`](#retro) | **Eng Manager** | Team-aware weekly retro. Per-person breakdowns, shipping streaks, test health trends, growth opportunities. |
 | [`/browse`](#browse) | **QA Engineer** | Give the agent eyes. Real Chromium browser, real clicks, real screenshots. ~100ms per command. |
 | [`/setup-browser-cookies`](#setup-browser-cookies) | **Session Manager** | Import cookies from your real browser (Chrome, Arc, Brave, Edge) into the headless session. Test authenticated pages. |
@@ -566,6 +567,53 @@ Claude: Analyzing 21 files changed across 3 commits. Found 8 documentation files
 ```
 
 It also polishes CHANGELOG voice (without ever overwriting entries), cleans up completed TODOS, checks cross-doc consistency, and asks about VERSION bumps only when appropriate.
+
+---
+
+## `/doc-init`
+
+This is my **context engineer mode**.
+
+AI agents can only work with what they can see in the repository. Slack threads, Google Docs, and tribal knowledge are invisible to them. `/doc-init` turns that hidden knowledge into versioned, searchable, verifiable artifacts inside `docs/`.
+
+### Two modes
+
+**Init mode** — first-time setup. Surveys the codebase (tech stack, architecture, scale), creates a structured `docs/` knowledge base with architecture docs, coding conventions, navigation index (`AGENTS.md`), and a freshness registry (`docs/.doc-meta.json`). Tailored to project size: small projects get 3-4 files, large projects get full domain mapping and multi-level navigation.
+
+**Garden mode** — incremental maintenance. Reads `git diff` since the last gardening commit, maps changed code to affected documentation via domain-to-doc mappings, updates stale docs, syncs navigation, and refreshes the freshness registry. Like garbage collection for documentation — small, frequent, automatic.
+
+### How it fits the workflow
+
+`/doc-init` and `/document-release` are complementary:
+- `/document-release` maintains top-level `.md` files (README, ARCHITECTURE, CONTRIBUTING, CHANGELOG)
+- `/doc-init` maintains the structured `docs/` knowledge base with freshness tracking
+
+When you run `/ship`, both are invoked automatically — Step 8.5 runs `/document-release`, Step 8.6 runs `/doc-init` garden mode (if `docs/.doc-meta.json` exists). Zero-friction documentation that stays current.
+
+### Example
+
+```
+You:   /doc-init
+
+Claude: Detected: no docs/ knowledge base. Running init mode.
+
+        Phase 0: Surveying codebase...
+        - TypeScript monorepo, ~35k LOC, Next.js + tRPC + Prisma
+        - 4 major domains: auth, billing, dashboard, API
+
+        Phase 1-3: Creating knowledge base...
+        - docs/architecture/overview.md (system diagram + component map)
+        - docs/architecture/components.md (per-domain interfaces)
+        - docs/guides/coding-conventions.md (extracted from ESLint + existing patterns)
+        - docs/domain-map.md (4 domains with boundary rules)
+        - AGENTS.md (navigation index, 95 lines)
+
+        Phase 4-5: Freshness tracking...
+        - docs/.doc-meta.json (12 entries, domain-to-doc mappings)
+
+        Knowledge base initialized. Run /doc-init again after code changes
+        to auto-update stale docs (garden mode).
+```
 
 ---
 

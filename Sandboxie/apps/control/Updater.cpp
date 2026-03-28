@@ -277,28 +277,6 @@ BOOLEAN CUpdater::QueryUpdateData(UPDATER_DATA* Context)
 	CString update_key;
 	//CSbieIni::GetInstance().GetText(_GlobalSettings, L"UpdateKey", update_key);
 
-    WCHAR CertPath[MAX_PATH];
-    SbieApi_GetHomePath(NULL, 0, CertPath, MAX_PATH);
-    wcscat(CertPath, L"\\Certificate.dat");
-	HANDLE hFile = CreateFile(CertPath, FILE_GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFile != INVALID_HANDLE_VALUE) {
-		char CertData[0x1000];
-		DWORD bytesRead = 0;
-		if (ReadFile(hFile, CertData, sizeof(CertData), &bytesRead, NULL)) {
-			CertData[bytesRead] = 0;
-
-			CString sCertData = CString(CertData);
-			int pos = sCertData.Find(L"UPDATEKEY:");
-			if (pos != -1) {
-				pos += 10;
-				int end = sCertData.Find(L"\n", pos);
-				if (end == -1) end = sCertData.GetLength();
-				update_key = sCertData.Mid(pos, end - pos).Trim();
-			}
-		}
-		CloseHandle(hFile);
-	}
-
 	Path += L"&update_key=" + update_key;
 
     QWORD RandID = 0;

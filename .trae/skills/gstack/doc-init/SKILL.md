@@ -297,14 +297,6 @@ Then write a `## GSTACK REVIEW REPORT` section to the end of the plan file:
 file you are allowed to edit in plan mode. The plan file review report is part of the
 plan's living status.
 
-## Detect default branch
-
-Before gathering data, detect the repo's default branch name:
-`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`
-
-If this fails, fall back to `main`. Use the detected name wherever the instructions
-say `origin/<default>` below.
-
 # doc-init — Harness Engineering 项目知识库初始化与维护
 
 > **角色：** 首席架构师 + 技术文档工程师 + Context Engineer

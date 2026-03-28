@@ -1398,8 +1398,6 @@ void COptionsWindow::UpdateCurrentTab()
 	}
 	else if (m_pCurrentTab == ui.tabDNS || m_pCurrentTab == ui.tabNetProxy)
 	{
-		if (!m_HoldChange && !m_pCurrentTab->isEnabled())
-			theGUI->CheckCertificate(this, 2);
 	}
 	else if (m_pCurrentTab == ui.tabCOM) {
 		CheckOpenCOM();

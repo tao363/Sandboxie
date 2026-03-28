@@ -122,7 +122,7 @@ QList<QVariant> CSbieModel::Sync(const QMap<QString, CSandBoxPtr>& BoxList, cons
 	bool bWatchSize = theConf->GetBool("Options/WatchBoxSize", false);
 	bool ColorIcons = theConf->GetBool("Options/ColorBoxIcons", false);
 	bool OverlayIcons = theConf->GetBool("Options/UseOverlayIcons", true);
-	bool bPlus = (theAPI->GetFeatureFlags() & CSbieAPI::eSbieFeatureCert) != 0;
+	bool bPlus = true; // cert check removed — always treat as Plus
 	bool bVintage = theConf->GetInt("Options/ViewMode", 1) == 2;
 	if (bVintage)
 		bPlus = false;

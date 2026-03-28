@@ -94,6 +94,13 @@ Before reviewing anything, answer these questions:
 
 5. **Completeness check:** Is the plan doing the complete version or a shortcut? With AI-assisted coding, the cost of completeness (100% test coverage, full edge case handling, complete error paths) is 10-100x cheaper than with a human team. If the plan proposes a shortcut that saves human-hours but only saves minutes with CC+gstack, recommend the complete version. Boil the lake.
 
+6. **Documentation infrastructure check:** Check if `docs/.doc-meta.json` exists. If it does not
+   and the plan introduces new architectural components, modules, or significant interfaces:
+   suggest running `/doc-init` as part of the implementation plan to establish the project knowledge
+   base. Frame as: "This plan introduces [N] new components — a `docs/` knowledge base would help
+   AI agents (and future contributors) navigate the growing architecture. Consider running `/doc-init`
+   after implementation." This is advisory — note it in the "NOT in scope" section if deferred.
+
 If the complexity check triggers (8+ files or 2+ new classes/services), proactively recommend scope reduction via AskUserQuestion — explain what's overbuilt, propose a minimal version that achieves the core goal, and ask whether to reduce or proceed as-is. If the complexity check does not trigger, present your Step 0 findings and proceed directly to Section 1.
 
 Always work through the full interactive review: one section at a time (Architecture → Code Quality → Tests → Performance) with at most 8 top issues per section.

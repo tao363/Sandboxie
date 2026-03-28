@@ -23,7 +23,6 @@
 #include "Wizards/SetupWizard.h"
 #include "Helpers/WinAdmin.h"
 #include "../MiscHelpers/Common/OtherFunctions.h"
-#include "Windows/SupportDialog.h"
 #include "../MiscHelpers/Archive/Archive.h"
 #include "../MiscHelpers/Archive/ArchiveFS.h"
 #include "Views/FileView.h"
@@ -147,11 +146,6 @@ static int CGetRecoveryTargetMonitorSetting()
 static int CGetNotificationTargetMonitorSetting()
 {
 	return theConf->GetInt("Options/NotificationWindowTargetMonitor", CGetNonMainTargetMonitorSetting());
-}
-
-static int CGetSupportDialogTargetMonitorSetting()
-{
-	return theConf->GetInt("Options/SupportDialogWindowTargetMonitor", CGetNonMainTargetMonitorSetting());
 }
 
 static int CGetWindowsMonitorNumber(const QString& screenName)
@@ -366,8 +360,6 @@ static void CApplyConfiguredMonitorPlacement(QWidget* pWidget)
 		monitorSetting = CGetTargetMonitorSetting();
 	else if (qobject_cast<CPopUpWindow*>(pWidget))
 		monitorSetting = CGetNotificationTargetMonitorSetting();
-	else if (qobject_cast<CSupportDialog*>(pWidget))
-		monitorSetting = CGetSupportDialogTargetMonitorSetting();
 	else if (qobject_cast<CRecoveryWindow*>(pWidget) || qobject_cast<CRecoveryLogWnd*>(pWidget))
 		monitorSetting = CGetRecoveryTargetMonitorSetting();
 	else
@@ -1416,75 +1408,6 @@ void CSandMan::UpdateLabel()
 		//auto neon = new CNeonEffect(10, 4, 180); // 140
 		//m_pLabel->setGraphicsEffect(NULL);
 	}
-	else if (g_Certificate.isEmpty())
-	{
-		LabelText = theConf->GetString("Updater/LabelMessage");
-		if(LabelText.isEmpty())
-			LabelText = tr("<a href=\"https://sandboxie-plus.com/go.php?to=patreon\">Support Sandboxie-Plus on Patreon</a>");
-		LabelTip = tr("Click to open web browser");
-
-		//auto neon = new CNeonEffect(10, 4, 240);
-		auto neon = new CNeonEffect(10, 4);
-		//neon->setGlowColor(Qt::green);
-		neon->setHue(240);
-		/*if(m_DarkTheme)
-			neon->setColor(QColor(218, 130, 42));
-		else
-			neon->setColor(Qt::blue);*/
-		m_pLabel->setGraphicsEffect(neon);
-
-		/*auto glowAni = new QVariantAnimation(neon);
-		glowAni->setDuration(10000);
-		glowAni->setLoopCount(-1);
-		glowAni->setStartValue(0);
-		glowAni->setEndValue(360);
-		glowAni->setEasingCurve(QEasingCurve::InQuad);
-			connect(glowAni, &QVariantAnimation::valueChanged, [neon](const QVariant &value) {
-				neon->setHue(value.toInt());
-				qDebug() << value.toInt();
-		});
-		glowAni->start();*/
-
-		/*auto glowAni = new QVariantAnimation(neon);
-		glowAni->setDuration(3000);
-		glowAni->setLoopCount(-1);
-		glowAni->setStartValue(5);
-		glowAni->setEndValue(20);
-		glowAni->setEasingCurve(QEasingCurve::InQuad);
-			connect(glowAni, &QVariantAnimation::valueChanged, [neon](const QVariant &value) {
-				neon->setBlurRadius(value.toInt());
-				qDebug() << value.toInt();
-		});
-		glowAni->start();*/
-
-		/*auto glowAni = new QVariantAnimation(neon);
-		glowAni->setDuration(3000);
-		glowAni->setLoopCount(-1);
-		glowAni->setStartValue(1);
-		glowAni->setEndValue(20);
-		glowAni->setEasingCurve(QEasingCurve::InQuad);
-			connect(glowAni, &QVariantAnimation::valueChanged, [neon](const QVariant &value) {
-				neon->setGlow(value.toInt());
-				qDebug() << value.toInt();
-		});
-		glowAni->start();*/
-
-		/*auto glowAni = new QVariantAnimation(neon);
-		glowAni->setDuration(3000);
-		glowAni->setLoopCount(-1);
-		glowAni->setStartValue(5);
-		glowAni->setEndValue(25);
-		glowAni->setEasingCurve(QEasingCurve::InQuad);
-			connect(glowAni, &QVariantAnimation::valueChanged, [neon](const QVariant &value) {
-				int iValue = value.toInt();
-				if (iValue >= 15)
-					iValue = 30 - iValue;
-				neon->setGlow(iValue);
-				neon->setBlurRadius(iValue);
-		});
-		glowAni->start();*/
-
-	}
 
 	if(m_pSeparator) m_pSeparator->setVisible(!LabelText.isEmpty());
 	m_pLabel->setVisible(!LabelText.isEmpty());
@@ -2054,8 +1977,6 @@ void CSandMan::OnMessage(const QString& MsgData)
 			}
 		}
 
-		CSupportDialog::CheckSupport(true);
-
 		if (BoxName.isEmpty() && theConf->GetBool("Options/RunInDefaultBox", false) && (QGuiApplication::queryKeyboardModifiers() & Qt::ControlModifier) == 0)
 			BoxName = theAPI->GetGlobalSettings()->GetText("DefaultBox", "DefaultBox");
 
@@ -2374,7 +2295,7 @@ void CSandMan::UpdateDrives()
 
 void CSandMan::UpdateForceUSB()
 {
-	if (!theAPI->GetGlobalSettings()->GetBool("ForceUsbDrives", false) || !g_CertInfo.active)
+	if (!theAPI->GetGlobalSettings()->GetBool("ForceUsbDrives", false))
 		return;
 
 	QString UsbSandbox = theAPI->GetGlobalSettings()->GetText("UsbSandbox", "USB_Box");
@@ -2716,7 +2637,6 @@ void CSandMan::OnStartMenuChanged()
 
 void CSandMan::OnBoxOpened(const CSandBoxPtr& pBox)
 {
-	CSupportDialog::CheckSupport(true);
 }
 
 void CSandMan::OnBoxClosed(const CSandBoxPtr& pBox)
@@ -2849,30 +2769,7 @@ void CSandMan::OnStatusChanged()
 
 		theAPI->WatchIni(true, theConf->GetBool("Options/WatchIni", true));
 
-		SB_STATUS Status = ReloadCert();
-		if (Status)
-			CSettingsWindow::LoadCertificate();
-		else if(Status.GetStatus() != 0xc0000225 /*STATUS_NOT_FOUND*/)
-			SetCertificate(""); // always delete invalid certificates
-
-		uchar UsageFlags = 0;
-		if (theAPI->GetSecureParam("UsageFlags", &UsageFlags, sizeof(UsageFlags))) {
-			if (!CERT_IS_TYPE(g_CertInfo, eCertBusiness)) {
-				if ((UsageFlags & (2 | 1)) != 0) {
-					if(g_CertInfo.active)
-						appTitle.append(tr(" for Personal use"));
-					else
-						appTitle.append(tr("   -   for Non-Commercial use ONLY"));
-				}
-			}
-		}
-		else { // migrate value form ini to registry // todo remove in later builds
-			int BusinessUse = theConf->GetInt("Options/BusinessUse", 2);
-			if (BusinessUse == 1) {
-				UsageFlags = 1;
-				theAPI->SetSecureParam("UsageFlags", &UsageFlags, sizeof(UsageFlags));
-			}
-		}
+		ReloadCert();
 
 		g_FeatureFlags = theAPI->GetFeatureFlags();
 
@@ -2949,10 +2846,12 @@ void CSandMan::OnStatusChanged()
 		}
 
 		if (isVisible())
-			CheckSupport();
+		{
+			// Support check removed
+		}
 
 		int WizardLevel = abs(theConf->GetInt("Options/WizardLevel", 0));
-		if (WizardLevel < (!g_CertInfo.active ? SETUP_LVL_3 : (theConf->GetInt("Options/CheckForUpdates", 2) != 1 ? SETUP_LVL_2 : SETUP_LVL_1))) {
+		if (WizardLevel < SETUP_LVL_CURRENT) {
 			if (!CSetupWizard::ShowWizard(WizardLevel)) { // if user canceled, mark that and do not show again, until there is something new
 				if(QMessageBox::question(NULL, "Sandboxie-Plus", tr("Do you want the setup wizard to be omitted?"), QMessageBox::Yes, QMessageBox::No | QMessageBox::Default) == QMessageBox::Yes)
 					theConf->SetValue("Options/WizardLevel", -SETUP_LVL_CURRENT);
@@ -3038,8 +2937,6 @@ void CSandMan::UpdateState()
 {
 	bool isConnected = theAPI->IsConnected();
 
-	//m_pSupport->setVisible(g_Certificate.isEmpty());
-
 	m_pTrayIcon->setIcon(GetTrayIcon(isConnected));
 	m_pTrayIcon->setToolTip(GetTrayText(isConnected));
 	m_bIconEmpty = true;
@@ -3101,36 +2998,14 @@ void CSandMan::OnMenuHover(QAction* action)
 
 void CSandMan::CheckSupport()
 {
-	if (CSupportDialog::CheckSupport())
-		return;
-
-	static bool ReminderShown = false;
-	if (!ReminderShown && (g_CertInfo.expired || (g_CertInfo.expirers_in_sec > 0 && g_CertInfo.expirers_in_sec < (60 * 60 * 24 * 30))) && !theConf->GetBool("Options/NoSupportCheck", false))
-	{
-		ReminderShown = true;
-		OpenSettings("Support");
-	}
-	else if (CSettingsWindow::CertRefreshRequired())
-	{
-		if (!g_CertInfo.active)
-			OpenSettings("Support");
-		else if (CSettingsWindow::CertRefreshRequired())
-			CSettingsWindow::TryRefreshCert(this, this, SLOT(OnCertData(const QByteArray&, const QVariantMap&)));
-	}
+	// Certificate/support check removed
 }
 
 void CSandMan::OnCertData(const QByteArray& Certificate, const QVariantMap& Params)
 {
 	if (Certificate.isEmpty())
-	{
-		/*QString Error = Params["error"].toString();
-		qDebug() << Error;
-		QString Message = tr("Error retrieving certificate: %1").arg(Error.isEmpty() ? tr("Unknown Error (probably a network issue)") : Error);
-		CSandMan::ShowMessageBox(this, QMessageBox::Critical, Message);*/
 		return;
-	}
 
-	SetCertificate(Certificate);
 	ReloadCert(this);
 }
 
@@ -3338,49 +3213,6 @@ void CSandMan::OnLogSbieMessage(quint32 MsgCode, const QStringList& MsgData, qui
 			m_MissingTemplates[MsgData[1]].insert(MsgData[2]);
 	}
 
-	if ((MsgCode & 0xFFFF) == 6004 || (MsgCode & 0xFFFF) == 6008 || (MsgCode & 0xFFFF) == 6009) // certificate error
-	{
-		QString Message;
-		if ((MsgCode & 0xFFFF) == 6008)
-		{
-			Message = tr("The box %1 is configured to use features exclusively available to project supporters.").arg(MsgData[1]);
-			Message.append(tr("<br /><a href=\"https://sandboxie-plus.com/go.php?to=sbie-get-cert\">Become a project supporter</a>, and receive a <a href=\"https://sandboxie-plus.com/go.php?to=sbie-cert\">supporter certificate</a>"));
-		}
-		else if ((MsgCode & 0xFFFF) == 6009)
-		{
-			Message = tr("The box %1 is configured to use features which require an <b>advanced</b> supporter certificate.").arg(MsgData[1]);
-			if(g_CertInfo.active)
-				Message.append(tr("<br /><a href=\"https://sandboxie-plus.com/go.php?to=sbie-upgrade-cert\">Upgrade your Certificate</a> to unlock advanced features."));
-			else
-				Message.append(tr("<br /><a href=\"https://sandboxie-plus.com/go.php?to=sbie-get-cert\">Become a project supporter</a>, and receive a <a href=\"https://sandboxie-plus.com/go.php?to=sbie-cert\">supporter certificate</a>"));
-		}
-		else
-		{
-			static quint64 iLastCertWarning = 0;
-			if (iLastCertWarning + 60 < QDateTime::currentDateTime().toSecsSinceEpoch()) { // reset after 60 seconds
-				iLastCertWarning = QDateTime::currentDateTime().toSecsSinceEpoch();
-
-				if (!MsgData[2].isEmpty())
-					Message = tr("The program %1 started in box %2 will be terminated in 5 minutes because the box was configured to use features exclusively available to project supporters.").arg(MsgData[2]).arg(MsgData[1]);
-				else
-					Message = tr("The box %1 is configured to use features exclusively available to project supporters, these presets will be ignored.").arg(MsgData[1]);
-				Message.append(tr("<br /><a href=\"https://sandboxie-plus.com/go.php?to=sbie-get-cert\">Become a project supporter</a>, and receive a <a href=\"https://sandboxie-plus.com/go.php?to=sbie-cert\">supporter certificate</a>"));
-
-				//bCertWarning = false;
-			}
-		}
-
-		if (!Message.isEmpty())
-		{
-			ShowMessageBox(this, QMessageBox::Critical, Message);
-			/*msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-			if (msgBox.exec() == QDialogButtonBox::Yes) {
-				OpenUrl(QUrl("https://sandboxie-plus.com/go.php?to=sbie-get-cert"));
-			}*/
-		}
-		// return;
-	}
-
 	QString ProcessName;
 	if (ProcessId == 4)
 		ProcessName = "System";
@@ -3398,9 +3230,6 @@ void CSandMan::OnLogSbieMessage(quint32 MsgCode, const QStringList& MsgData, qui
 		QString Link, Message = FormatSbieMessage(MsgCode, MsgData, ProcessName, &Link);
 		AddLogMessage(QDateTime::currentDateTime(), Message, Link);
 	}
-
-	if ((MsgCode & 0xFFFF) == 6004) // certificate error
-		return; // don't pop that one up
 
 	if ((MsgCode & 0xFFFF) == 2111) // process open denided
 		return; // don't pop that one up
@@ -3431,175 +3260,20 @@ void CSandMan::SaveMessageLog(QIODevice* pFile)
 
 bool CSandMan::SetCertificate(const QByteArray& Certificate)
 {
-	g_Certificate = Certificate;
-	SB_STATUS Status = theAPI->SetDatFile("Certificate.dat", Certificate);
-	return Status;
+	return true;
 }
 
 
 bool CSandMan::CheckCertificate(QWidget* pWidget, int iType)
 {
-	QString Message;
-	if (iType == 1 || iType == 2)
-	{
-		if (iType == 1 ? g_CertInfo.opt_enc : g_CertInfo.opt_net)
-			return true;
-
-		Message = tr("The selected feature requires an <b>advanced</b> supporter certificate.");
-		if (iType == 2 && CERT_IS_TYPE(g_CertInfo, eCertPatreon))
-			Message.append(tr("<br />you need to be on the Great Patreon level or higher to unlock this feature."));
-		else if (g_CertInfo.active)
-			Message.append(tr("<br /><a href=\"https://sandboxie-plus.com/go.php?to=sbie-upgrade-cert\">Upgrade your Certificate</a> to unlock advanced features."));
-		else
-			Message.append(tr("<br /><a href=\"https://sandboxie-plus.com/go.php?to=sbie-get-cert\">Become a project supporter</a>, and receive a <a href=\"https://sandboxie-plus.com/go.php?to=sbie-cert\">supporter certificate</a>"));
-	}
-	else
-	{
-		if (iType == -1 ? g_CertInfo.active : g_CertInfo.opt_sec)
-			return true;
-
-		if(iType == 2)
-			Message = tr("The selected feature set is only available to project supporters.<br />"
-				"<a href=\"https://sandboxie-plus.com/go.php?to=sbie-get-cert\">Become a project supporter</a>, and receive a <a href=\"https://sandboxie-plus.com/go.php?to=sbie-cert\">supporter certificate</a>");
-		else
-			Message = tr("The selected feature set is only available to project supporters. Processes started in a box with this feature set enabled without a supporter certificate will be terminated after 5 minutes.<br />"
-				"<a href=\"https://sandboxie-plus.com/go.php?to=sbie-get-cert\">Become a project supporter</a>, and receive a <a href=\"https://sandboxie-plus.com/go.php?to=sbie-cert\">supporter certificate</a>");
-	}
-
-	QMessageBox msgBox(pWidget);
-	msgBox.setTextFormat(Qt::RichText);
-	msgBox.setIcon(QMessageBox::Information);
-	msgBox.setWindowTitle("Sandboxie-Plus");
-	msgBox.setText(Message);
-	msgBox.setStandardButtons(QMessageBox::Ok);
-	msgBox.exec();
-	/*msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-	if (msgBox.exec() == QDialogButtonBox::Yes) {
-		OpenUrl(QUrl("https://sandboxie-plus.com/go.php?to=sbie-get-cert"));
-	}*/
-
-	return false;
+	return true;
 }
-
-void InitCertSlot();
 
 SB_STATUS CSandMan::ReloadCert(QWidget* pWidget)
 {
 	SB_STATUS Status = theAPI->ReloadCert();
 
 	theAPI->GetDriverInfo(-1, &g_CertInfo.State, sizeof(g_CertInfo.State));
-
-	if (!Status.IsError())
-	{
-		BYTE CertBlocked = 0;
-		theAPI->GetSecureParam("CertBlocked", &CertBlocked, sizeof(CertBlocked));
-		if (CertBlocked) {
-			if (g_CertInfo.type == eCertEvaluation)
-				g_CertInfo.active = 0; // no eval when cert blocked
-			else {
-				CertBlocked = 0;
-				theAPI->SetSecureParam("CertBlocked", &CertBlocked, sizeof(CertBlocked));
-			}
-		}
-	}
-	else if (Status.GetStatus() == 0xC0000804L /*STATUS_CONTENT_BLOCKED*/)
-	{
-		QMessageBox::critical(pWidget ? pWidget : this, "Sandboxie-Plus",
-			tr("The certificate you are attempting to use has been blocked, meaning it has been invalidated for cause. Any attempt to use it constitutes a breach of its terms of use!"));
-
-		BYTE CertBlocked = 1;
-		theAPI->SetSecureParam("CertBlocked", &CertBlocked, sizeof(CertBlocked));
-	}
-	else if (Status.GetStatus() != 0xC0000225L /*STATUS_NOT_FOUND*/)
-	{
-		QString Info;
-		switch (Status.GetStatus())
-		{
-		case 0xC000000DL: /*STATUS_INVALID_PARAMETER*/
-		case 0xC0000079L: /*STATUS_INVALID_SECURITY_DESCR:*/
-		case 0xC000A000L: /*STATUS_INVALID_SIGNATURE:*/			Info = tr("The Certificate Signature is invalid!"); break;
-		case 0xC0000024L: /*STATUS_OBJECT_TYPE_MISMATCH:*/		Info = tr("The Certificate is not suitable for this product."); break;
-		case 0xC0000485L: /*STATUS_FIRMWARE_IMAGE_INVALID:*/	Info = tr("The Certificate is node locked."); break;
-		default:												Info = QString("0x%1").arg((quint32)Status.GetStatus(), 8, 16, QChar('0'));
-		}
-
-		QMessageBox::critical(pWidget ? pWidget : this, "Sandboxie-Plus", tr("The support certificate is not valid.\nError: %1").arg(Info));
-	}
-
-#ifdef _DEBUG
-	qDebug() << "g_CertInfo" << g_CertInfo.State;
-	qDebug() << "g_CertInfo.active" << g_CertInfo.active;
-	qDebug() << "g_CertInfo.expired" << g_CertInfo.expired;
-	qDebug() << "g_CertInfo.outdated" << g_CertInfo.outdated;
-	qDebug() << "g_CertInfo.grace_period" << g_CertInfo.grace_period;
-	qDebug() << "g_CertInfo.type" << CSettingsWindow::GetCertType();
-	qDebug() << "g_CertInfo.level" << CSettingsWindow::GetCertLevel();
-#endif
-
-	if (g_CertInfo.active)
-	{
-		// behave as if there would be no certificate at all
-		if (theConf->GetBool("Debug/IgnoreCertificate", false))
-			g_CertInfo.State = 0;
-		else
-		{
-			// simulate certificate being about to expire in 3 days from now
-			if (theConf->GetBool("Debug/CertFakeAboutToExpire", false))
-				g_CertInfo.expirers_in_sec = 3 * 24 * 3600;
-
-			// simulate certificate having expired but being in the grace period
-			if (theConf->GetBool("Debug/CertFakeGracePeriode", false))
-				g_CertInfo.grace_period = 1;
-
-			// simulate a subscription type certificate having expired
-			if (theConf->GetBool("Debug/CertFakeOld", false)) {
-				g_CertInfo.active = 0;
-				g_CertInfo.expired = 1;
-			}
-
-			// simulate a perpetual use certificate being outside the update window
-			if (theConf->GetBool("Debug/CertFakeExpired", false)) {
-				// still valid
-				g_CertInfo.expired = 1;
-			}
-
-			// simulate a perpetual use certificate being outside the update window
-			// and having been applied to a version built after the update window has ended
-			if (theConf->GetBool("Debug/CertFakeOutdated", false)) {
-				g_CertInfo.active = 0;
-				g_CertInfo.expired = 1;
-				g_CertInfo.outdated = 1;
-			}
-
-			int Type = theConf->GetInt("Debug/CertFakeType", -1);
-			if (Type != -1)
-				g_CertInfo.type = Type << 2;
-
-			int Level = theConf->GetInt("Debug/CertFakeLevel", -1);
-			if (Level != -1)
-				g_CertInfo.level = Level;
-		}
-	}
-
-	if (CERT_IS_TYPE(g_CertInfo, eCertBusiness))
-		InitCertSlot();
-
-	if (CERT_IS_TYPE(g_CertInfo, eCertEvaluation))
-	{
-		if (g_CertInfo.expired)
-			OnLogMessage(tr("The evaluation period has expired!!!"));
-	}
-	else
-	{
-		if (g_CertInfo.outdated)
-			OnLogMessage(tr("The supporter certificate is not valid for this build, please get an updated certificate"));
-		// outdated always implicates it is no longer valid
-		else if (g_CertInfo.expired) // may be still valid for the current and older builds
-			OnLogMessage(tr("The supporter certificate has expired%1, please get an updated certificate")
-				.arg(!g_CertInfo.outdated ? tr(", but it remains valid for the current build") : ""));
-		else if (g_CertInfo.expirers_in_sec > 0 && g_CertInfo.expirers_in_sec < (60 * 60 * 24 * 30))
-			OnLogMessage(tr("The supporter certificate will expire in %1 days, please get an updated certificate").arg(g_CertInfo.expirers_in_sec / (60 * 60 * 24)));
-	}
 
 	emit CertUpdated();
 
@@ -3611,7 +3285,7 @@ void CSandMan::OnQueuedRequest(quint32 ClientPid, quint32 ClientTid, quint32 Req
 	if (Data["id"].toInt() == 0)
 	{
 		QVariantMap Ret;
-		Ret["retval"] = (theAPI->IsStarting(ClientPid) || CSupportDialog::ShowDialog()) ? 1 : 0;
+		Ret["retval"] = 1;
 		theAPI->SendQueueRpl(RequestId, Ret);
 		return;
 	}
@@ -4180,8 +3854,6 @@ void CSandMan::OnResetMsgs()
 		theConf->DelValue("Options/WarnWizardOnClose");
 
 		theConf->DelValue("Options/IgnoreUnkBuild");
-
-		theConf->DelValue("Options/AskCertRefresh");
 	}
 
 	theAPI->GetUserSettings()->UpdateTextList("SbieCtrl_HideMessage", QStringList(), true);
@@ -4810,22 +4482,11 @@ void CSandMan::OnAbout()
 {
 	if (sender() == m_pAbout)
 	{
-		if ((QGuiApplication::queryKeyboardModifiers() & Qt::ControlModifier) != 0){
-			CheckSupport();
-			return;
-		}
-
 		QString AboutCaption = tr(
 			"<h3>About Sandboxie-Plus</h3>"
 			"<p>Version %1</p>"
 			"<p>" MY_COPYRIGHT_STRING "</p>"
 		).arg(theGUI->GetVersion(true));
-
-		QString CertInfo;
-		if (!g_Certificate.isEmpty())
-			CertInfo = tr("This copy of Sandboxie-Plus is certified for: %1").arg(GetArguments(g_Certificate, L'\n', L':').value("NAME"));
-		else
-			CertInfo = tr("Sandboxie-Plus is free for personal and non-commercial use.");
 
 		QString SbiePath = theAPI->GetSbiePath();
 
@@ -4833,15 +4494,13 @@ void CSandMan::OnAbout()
 			"Sandboxie-Plus is an open source continuation of Sandboxie.<br />"
 			"Visit <a href=\"https://sandboxie-plus.com\">sandboxie-plus.com</a> for more information.<br />"
 			"<br />"
-			"%2<br />"
-			"<br />"
-			"Features: %3<br />"
+			"Features: %2<br />"
 			"<br />"
 			"Installation: %1<br />"
-			"SbieDrv.sys: %4<br /> SbieSvc.exe: %5<br /> SbieDll.dll: %6<br />"
+			"SbieDrv.sys: %3<br /> SbieSvc.exe: %4<br /> SbieDll.dll: %5<br />"
 			"<br />"
 			"Icons from <a href=\"https://icons8.com\">icons8.com</a>"
-		).arg(SbiePath).arg(CertInfo).arg(theAPI->GetFeatureStr())
+		).arg(SbiePath).arg(theAPI->GetFeatureStr())
 		.arg(GetProductVersion(SbiePath + "\\SbieDrv.sys")).arg(GetProductVersion(SbiePath + "\\SbieSvc.exe")).arg(GetProductVersion(SbiePath + "\\SbieDll.dll"));
 
 		QMessageBox *msgBox = new QMessageBox(this);
@@ -4857,35 +4516,6 @@ void CSandMan::OnAbout()
 
 		QPainter painter(&pix);
 		painter.drawPixmap(0, 0, ico.pixmap(128, 128));
-
-		if (g_CertInfo.active)
-		{
-			//painter.setPen(Qt::blue);
-			//painter.drawRect(0, 0, 127, 159);
-
-			QFont font;
-			font.fromString("Cooper Black");
-			//font.setItalic(true);
-
-			font.setPointSize(12);
-			painter.setFont(font);
-			painter.setPen(CSettingsWindow::GetCertColor());
-
-			QString Type = CSettingsWindow::GetCertType();
-			QSize TypeSize = QFontMetrics(painter.font()).size(Qt::TextSingleLine, Type);
-			//painter.drawText((128 - TypeSize.width()) / 2, 128, TypeSize.width(), TypeSize.height(), 0, Type);
-			painter.drawText(0, 128 - 8, 128, TypeSize.height(), Qt::AlignHCenter, Type);
-
-			if (g_CertInfo.level != eCertMaxLevel && g_CertInfo.level != eCertStandard) {
-
-				font.setPointSize(10);
-				painter.setFont(font);
-				painter.setPen(Qt::black);
-
-				QString Level = CSettingsWindow::GetCertLevel();
-				painter.drawText(0, 128 + 8, 120, TypeSize.height(), Qt::AlignRight, Level);
-			}
-		}
 
 		msgBox->setIconPixmap(pix);
 
@@ -4916,153 +4546,3 @@ QT_TRANSLATE_NOOP("CSandBox", "Finishing Snapshot Merge..."),
 
 
 #include "SbieFindWnd.cpp"
-
-std::wstring g_SlotName;
-HANDLE g_MailThread = NULL;
-bool g_MailRun = false;
-wchar_t g_MyName[MAX_COMPUTERNAME_LENGTH + 1];
-ULONGLONG g_LastSlotScan = 0;
-std::map<std::wstring, ULONGLONG> g_CertUsers;
-std::mutex g_CertUsersLock;
-int g_CertAmount = 0;
-
-void SlotSend(const std::wstring& message)
-{
-	std::wstring strSlotName = L"\\\\*\\mailslot\\" + g_SlotName;
-    HANDLE hSlot = CreateFileW(strSlotName.c_str(),
-        GENERIC_WRITE,
-        FILE_SHARE_READ,
-        (LPSECURITY_ATTRIBUTES) NULL,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        (HANDLE) NULL);
-    if (hSlot == INVALID_HANDLE_VALUE)
-    {
-		//GetLastError();
-		return;
-    }
-
-    DWORD cbWritten;
-	WriteFile(hSlot, message.c_str(), (DWORD)(message.size() + 1) * sizeof(wchar_t), &cbWritten, NULL);
-
-	CloseHandle(hSlot);
-}
-
-void CleanUpSeats()
-{
-	std::lock_guard<std::mutex> lock(g_CertUsersLock);
-
-	for (auto I = g_CertUsers.begin(); I != g_CertUsers.end();) {
-		if (I->second + 10 * 1000 < g_LastSlotScan)
-			I = g_CertUsers.erase(I);
-		else
-			++I;
-	}
-}
-
-void ScanForSeats()
-{
-	if (g_LastSlotScan + 5 * 1000 < GetTickCount64())
-		SlotSend(L"?");
-}
-
-int CountSeats()
-{
-	std::lock_guard<std::mutex> lock(g_CertUsersLock);
-	return g_CertUsers.size();
-}
-
-DWORD WINAPI MailThreadFunc(LPVOID lpParam)
-{
-	std::wstring strSlotName = L"\\\\.\\mailslot\\" + g_SlotName;
-	HANDLE hSlot = CreateMailslotW(strSlotName.c_str(),
-        0,                             // no maximum message size
-        MAILSLOT_WAIT_FOREVER,         // no time-out for operations
-        (LPSECURITY_ATTRIBUTES) NULL); // default security
-    if (hSlot == INVALID_HANDLE_VALUE)  {
-        //GetLastError()
-        return FALSE;
-    }
-
-	ScanForSeats();
-
-	int EvalCounter = 0;
-
-	while (g_MailRun)
-	{
-		DWORD cbMessage;
-		DWORD dwMessageCount;
-		if(!GetMailslotInfo(hSlot, // mailslot handle
-			(LPDWORD)NULL,         // no maximum message size
-			&cbMessage,            // size of next message
-			&dwMessageCount,       // number of messages
-			(LPDWORD)NULL))        // no read time-out
-		{
-			//GetLastError();
-			continue;
-		}
-
-		if (cbMessage == MAILSLOT_NO_MESSAGE)
-		{
-			if (EvalCounter && --EvalCounter == 0) {
-				if (CountSeats() > g_CertAmount) {
-					QTimer::singleShot(0, theGUI, []() {
-						if(!CSupportDialog::ShowDialog())
-							PostQuitMessage(0);
-					});
-				}
-			}
-
-			//printf("Waiting for a message...\n");
-			Sleep(100);
-			continue;
-		}
-
-		DWORD cbRead;
-		wchar_t* lpszBuffer = (wchar_t*)GlobalAlloc(GPTR, (cbMessage + 1) * sizeof(wchar_t));
-		if (ReadFile(hSlot, lpszBuffer, cbMessage, &cbRead, NULL))
-		{
-			lpszBuffer[cbRead/sizeof(wchar_t)] = L'\0';
-			if (_wcsicmp(lpszBuffer, L"?") == 0)
-			{
-				if (g_LastSlotScan + 10 * 1000 < GetTickCount64()) {
-					CleanUpSeats();
-					g_LastSlotScan = GetTickCount64();
-					if(g_CertAmount)
-						EvalCounter = 30; // 3 sec
-				}
-
-				SlotSend(g_MyName);
-			}
-			else
-			{
-				std::lock_guard<std::mutex> lock(g_CertUsersLock);
-				g_CertUsers[lpszBuffer] = GetTickCount64();
-			}
-		}
-		GlobalFree((HGLOBAL)lpszBuffer);
-	}
-
-	return TRUE;
-}
-
-void InitCertSlot()
-{
-	DWORD dwSize = ARRSIZE(g_MyName);
-	GetComputerNameW(g_MyName, &dwSize);
-
-	if (g_MailRun) {
-		g_MailRun = false;
-		if (WaitForSingleObject(g_MailThread, 10 * 1000) != WAIT_OBJECT_0)
-			TerminateThread(g_MailThread, -2);
-		g_MailThread = NULL;
-	}
-
-	auto CertData = GetArguments(g_Certificate, L'\n', L':');
-	QString UpdateKey = CertData.value("UPDATEKEY");
-	g_SlotName = L"sbie-plus_" + UpdateKey.toStdWString();
-	g_CertAmount = CertData.value("AMOUNT").toInt();
-
-	g_MailRun = true;
-	g_MailThread = CreateThread(NULL, 0, MailThreadFunc, NULL, 0, NULL);
-}

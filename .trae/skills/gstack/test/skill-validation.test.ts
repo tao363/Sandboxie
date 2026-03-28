@@ -242,6 +242,7 @@ describe('Update check preamble', () => {
     'land-and-deploy/SKILL.md',
     'setup-deploy/SKILL.md',
     'cso/SKILL.md',
+    'doc-init/SKILL.md',
   ];
 
   for (const skill of skillsWithUpdateCheck) {
@@ -559,6 +560,7 @@ describe('v0.4.1 preamble features', () => {
     'land-and-deploy/SKILL.md',
     'setup-deploy/SKILL.md',
     'cso/SKILL.md',
+    'doc-init/SKILL.md',
   ];
 
   for (const skill of skillsWithPreamble) {
@@ -749,6 +751,7 @@ describe('Contributor mode preamble structure', () => {
     'benchmark/SKILL.md',
     'land-and-deploy/SKILL.md',
     'setup-deploy/SKILL.md',
+    'doc-init/SKILL.md',
   ];
 
   for (const skill of skillsWithPreamble) {
@@ -837,7 +840,9 @@ describe('Completeness Principle in generated SKILL.md files', () => {
     'design-review/SKILL.md',
     'design-consultation/SKILL.md',
     'document-release/SKILL.md',
-    'cso/SKILL.md',  ];
+    'cso/SKILL.md',
+    'doc-init/SKILL.md',
+  ];
 
   for (const skill of skillsWithPreamble) {
     test(`${skill} contains Completeness Principle section`, () => {
@@ -1387,6 +1392,7 @@ describe('Skill trigger phrases', () => {
     'plan-ceo-review', 'plan-eng-review', 'plan-design-review',
     'design-review', 'design-consultation', 'retro', 'document-release',
     'codex', 'browse', 'setup-browser-cookies',
+    'doc-init',
   ];
 
   for (const skill of SKILLS_REQUIRING_TRIGGERS) {
@@ -1406,6 +1412,7 @@ describe('Skill trigger phrases', () => {
     'qa', 'qa-only', 'ship', 'review', 'investigate', 'office-hours',
     'plan-ceo-review', 'plan-eng-review', 'plan-design-review',
     'design-review', 'design-consultation', 'retro', 'document-release',
+    'doc-init',
   ];
 
   for (const skill of SKILLS_REQUIRING_PROACTIVE) {

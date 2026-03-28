@@ -14,8 +14,6 @@ CSetupWizard::CSetupWizard(int iOldLevel, QWidget *parent)
 {
     if (iOldLevel < SETUP_LVL_1)
         setPage(Page_Intro, new CIntroPage);
-    if (iOldLevel < SETUP_LVL_3)
-        setPage(Page_Certificate, new CCertificatePage(iOldLevel));
     if (iOldLevel < SETUP_LVL_1) {
         setPage(Page_UI, new CUIPage);
         setPage(Page_Shell, new CShellPage);
@@ -198,7 +196,7 @@ CIntroPage::CIntroPage(QWidget *parent)
 
     uchar BusinessUse = 2;
     if (!g_Certificate.isEmpty())
-        BusinessUse = CERT_IS_TYPE(g_CertInfo, eCertBusiness) ? 1 : 0;
+        BusinessUse = 0;
     else {
         uchar UsageFlags = 0;
         if (theAPI->GetSecureParam("UsageFlags", &UsageFlags, sizeof(UsageFlags)))
@@ -226,8 +224,6 @@ CIntroPage::CIntroPage(QWidget *parent)
 
 int CIntroPage::nextId() const
 {
-    if(g_Certificate.isEmpty())
-        return CSetupWizard::Page_Certificate;
     return CSetupWizard::Page_UI;
 }
 
@@ -236,176 +232,6 @@ bool CIntroPage::isComplete() const
     if (m_pLabel->isEnabled() && !m_pPersonal->isChecked() && !m_pBusiness->isChecked())
         return false;
     return QWizardPage::isComplete();
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////
-// CCertificatePage
-// 
-
-CCertificatePage::CCertificatePage(int iOldLevel, QWidget *parent)
-    : QWizardPage(parent)
-{
-    setTitle(tr("Install your <b>Sandboxie-Plus</b> support certificate"));
-    setSubTitle(tr("If you have a supporter certificate, please fill it into the field below."));
-    
-    if (iOldLevel < SETUP_LVL_1)
-        m_NextPage = CSetupWizard::Page_UI;
-    else if (iOldLevel < SETUP_LVL_3)
-        m_NextPage = CSetupWizard::Page_Finish;
-
-    QGridLayout *layout = new QGridLayout;
-
-    m_pTopLabel = new QLabel();
-    m_pTopLabel->setWordWrap(true);
-    connect(m_pTopLabel, SIGNAL(linkActivated(const QString&)), theGUI, SLOT(OpenUrl(const QString&)));
-    layout->addWidget(m_pTopLabel);
-
-    m_pCertificate = new QPlainTextEdit();
-    m_pCertificate->setMaximumSize(QSize(16777215, 73));
-    m_pCertificate->setPlaceholderText(
-		"NAME: User Name\n"
-		"TYPE: ULTIMATE\n"
-		"DATE: dd.mm.yyyy\n"
-		"UPDATEKEY: 00000000000000000000000000000000\n"
-		"SIGNATURE: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
-	);
-    layout->addWidget(m_pCertificate);
-    connect(m_pCertificate, SIGNAL(textChanged()), this, SIGNAL(completeChanged()));
-    registerField("useCertificate", m_pCertificate, "plainText");
-    
-    layout->addWidget(new QLabel(tr("Retrieve certificate using Serial Number:")));
-
-    m_pSerial = new QLineEdit();
-    m_pSerial->setPlaceholderText("SBIE_-_____-_____-_____-_____");
-    layout->addWidget(m_pSerial);
-
-    m_pEvaluate = new QCheckBox(tr("Start evaluation without a certificate for a limited period of time."));
-    if (CERT_IS_TYPE(g_CertInfo, eCertEvaluation)) {
-        m_pEvaluate->setEnabled(false);
-        m_pEvaluate->setChecked(true);
-    }
-    layout->addWidget(m_pEvaluate);
-    connect(m_pEvaluate, SIGNAL(toggled(bool)), this, SIGNAL(completeChanged()));
-    registerField("isEvaluate", m_pEvaluate);
-
-    QLabel* pGetEvalCert = new QLabel(tr("<b><a href=\"_\"><font color='red'>Get a free evaluation certificate</font></a> and enjoy all premium features for %1 days.</b>").arg(EVAL_DAYS));
-    pGetEvalCert->setToolTip(tr("You can request a free %1-day evaluation certificate up to %2 times per hardware ID.").arg(EVAL_DAYS).arg(EVAL_MAX));
-    layout->addWidget(pGetEvalCert);
-    connect(pGetEvalCert, &QLabel::linkActivated, this, [=]() {
-        CSettingsWindow::StartEval(this, this, SLOT(OnCertData(const QByteArray&, const QVariantMap&)));
-	});
-
-    layout->addWidget(new QWidget());
-
-    setLayout(layout);
-}
-
-void CCertificatePage::initializePage()
-{
-    m_pCertificate->setPlainText(g_Certificate);
-
-    uchar UsageFlags = 0;
-    theAPI->GetSecureParam("UsageFlags", &UsageFlags, sizeof(UsageFlags));
-
-    if (field("useBusiness").toBool())
-    {
-        UsageFlags |= 1;
-        UsageFlags &= ~2;
-        theAPI->SetSecureParam("UsageFlags", &UsageFlags, sizeof(UsageFlags));
-
-        m_pTopLabel->setText(
-            tr("To use <b>Sandboxie-Plus</b> in a business setting, an appropriate <a href=\"https://sandboxie-plus.com/go.php?to=sbie-get-cert\">support certificate</a> for business use is required. "
-            "If you do not yet have the required certificate(s), you can get those from the <a href=\"https://xanasoft.com/shop/\">xanasoft.com web shop</a>.")
-        );
-
-        m_pEvaluate->setVisible(true);
-    }
-    else 
-    {
-        if((UsageFlags & 1) != 0)
-            UsageFlags |= 2;
-        UsageFlags &= ~1;
-        theAPI->SetSecureParam("UsageFlags", &UsageFlags, sizeof(UsageFlags));
-
-        m_pTopLabel->setText(
-            tr("<b>Sandboxie-Plus</b> provides additional features and box types exclusively to <u>project supporters</u>. "
-                "Boxes like the Privacy Enhanced boxes <b><font color='red'>protect user data from illicit access</font></b> by the sandboxed programs. "
-                "If you are not yet a supporter, then please consider <a href=\"https://sandboxie-plus.com/go.php?to=sbie-get-cert\">supporting the project</a> "
-                "to ensure further development of Sandboxie and to receive a <a href=\"https://sandboxie-plus.com/go.php?to=sbie-cert\">supporter certificate</a>.")
-        );
-
-        m_pEvaluate->setVisible(false);
-    }
-
-    m_pSerial->setVisible(true);
-    m_pSerial->clear();
-}
-
-int CCertificatePage::nextId() const
-{
-    return m_NextPage;
-}
-
-bool CCertificatePage::isComplete() const 
-{
-    if (field("useBusiness").toBool())
-    {
-        m_pCertificate->setEnabled(!(m_pEvaluate->isChecked() && m_pEvaluate->isEnabled()));
-        if (m_pCertificate->toPlainText().isEmpty() && !(m_pEvaluate->isChecked() && m_pEvaluate->isEnabled()))
-            return false;
-    }
-    return QWizardPage::isComplete();
-}
-
-void CCertificatePage::OnCertData(const QByteArray& Certificate, const QVariantMap& Params)
-{
-    if (!Certificate.isEmpty()) {
-        m_pSerial->clear();
-        m_pCertificate->setPlainText(Certificate);
-        wizard()->next();
-    }
-    else {
-        QString Message = tr("Failed to retrieve the certificate.");
-        Message += tr("\nError: %1").arg(Params["error"].toString());
-        QMessageBox::critical(this, "Sandboxie-Plus", Message);
-    }
-}
-
-bool CCertificatePage::validatePage()
-{
-    if (m_pEvaluate->isChecked())
-        return true;
-
-    QByteArray Certificate = m_pCertificate->toPlainText().toUtf8();
-    QString Serial = m_pSerial->text();
-
-    if (!Serial.isEmpty()) {
-        QVariantMap Params;
-	    if(!Certificate.isEmpty())
-		    Params["key"] = GetArguments(Certificate, L'\n', L':').value("UPDATEKEY");
-        SB_PROGRESS Status = theGUI->m_pUpdater->GetSupportCert(Serial, this, SLOT(OnCertData(const QByteArray&, const QVariantMap&)), Params);
-	    if (Status.GetStatus() == OP_ASYNC) {
-		    theGUI->AddAsyncOp(Status.GetValue());
-            Status.GetValue()->ShowMessage(tr("Retrieving certificate..."));
-	    }
-        return false;
-    }
-
-    if (!Certificate.isEmpty()) {
-        if (Certificate != g_Certificate) {
-            if (CSettingsWindow::ApplyCertificate(Certificate, this))
-                return false;
-        }
-        if (CSettingsWindow::CertRefreshRequired()) {
-            if (!CSettingsWindow::TryRefreshCert(this, this, SLOT(OnCertData(const QByteArray&, const QVariantMap&)))) {
-                m_pCertificate->clear();
-                theGUI->SetCertificate("");
-            }
-            return false;
-        }
-    }
-
-    return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -719,7 +545,7 @@ void CSBUpdate::initializePage()
     m_pUpdate->setChecked(true);
     m_pStable->setChecked(true);
 
-    m_pBottomLabel->setVisible(!g_CertInfo.active || g_CertInfo.expired);
+    m_pBottomLabel->setVisible(false);
 
     UpdateOptions();
 }
@@ -743,7 +569,7 @@ void CSBUpdate::UpdateOptions()
 
     m_pStable->setEnabled(m_pVersion->isChecked());
     m_pPreview->setEnabled(m_pVersion->isChecked());
-    m_pInsider->setEnabled(CERT_IS_INSIDER(g_CertInfo) && m_pVersion->isChecked());
+    m_pInsider->setEnabled(m_pVersion->isChecked());
 
     m_pHotfixes->setEnabled(m_pVersion->isChecked());
 }

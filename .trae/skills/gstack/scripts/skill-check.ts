@@ -36,6 +36,7 @@ const SKILL_FILES = [
   'land-and-deploy/SKILL.md',
   'setup-deploy/SKILL.md',
   'cso/SKILL.md',
+  'doc-init/SKILL.md',
 ].filter(f => fs.existsSync(path.join(ROOT, f)));
 
 let hasErrors = false;

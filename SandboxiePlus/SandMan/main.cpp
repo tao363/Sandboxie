@@ -9,6 +9,8 @@
 #include "./Windows/SettingsWindow.h"
 #include "./Wizards/SetupWizard.h"
 
+extern void InitCertInfoDefaults();
+
 CSettings* theConf = NULL;
 
 QString g_PendingMessage;
@@ -22,8 +24,8 @@ int main(int argc, char *argv[])
 	*wcsrchr(szPath, L'\\') = L'\0';
 	QString AppDir = QString::fromWCharArray(szPath);
 
-	if (QFile::exists(AppDir + "\\Certificate.dat"))
-		CSettingsWindow::LoadCertificate(AppDir + "\\Certificate.dat");
+	// Initialize cert info defaults (replaces LoadCertificate)
+	InitCertInfoDefaults();
 
 	// use AppFolder/PlusData when present, else fallback to AppFolder
 	QString ConfDir = AppDir + "\\PlusData";

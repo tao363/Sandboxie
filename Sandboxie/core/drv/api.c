@@ -1211,23 +1211,13 @@ _FX NTSTATUS Api_QueryDriverInfo(PROCESS* proc, ULONG64* parms)
                 FeatureFlags |= SBIE_FEATURE_FLAG_WIN32K_HOOK;
 #endif
 
-            if (Verify_CertInfo.active)
-                FeatureFlags |= SBIE_FEATURE_FLAG_CERTIFIED;
-
-            if (Verify_CertInfo.opt_sec) {
-                FeatureFlags |= SBIE_FEATURE_FLAG_SECURITY_MODE;
-                FeatureFlags |= SBIE_FEATURE_FLAG_PRIVACY_MODE;
-                FeatureFlags |= SBIE_FEATURE_FLAG_COMPARTMENTS;
-            }
-
-            if (Verify_CertInfo.opt_enc)
-                FeatureFlags |= SBIE_FEATURE_FLAG_ENCRYPTION;
-
-            if (Verify_CertInfo.opt_net)
-                FeatureFlags |= SBIE_FEATURE_FLAG_NET_PROXY;
-
-            if (Verify_CertInfo.type == eCertDeveloper)
-                FeatureFlags |= SBIE_FEATURE_FLAG_NO_SIG;
+            FeatureFlags |= SBIE_FEATURE_FLAG_CERTIFIED;
+            FeatureFlags |= SBIE_FEATURE_FLAG_SECURITY_MODE;
+            FeatureFlags |= SBIE_FEATURE_FLAG_PRIVACY_MODE;
+            FeatureFlags |= SBIE_FEATURE_FLAG_COMPARTMENTS;
+            FeatureFlags |= SBIE_FEATURE_FLAG_ENCRYPTION;
+            FeatureFlags |= SBIE_FEATURE_FLAG_NET_PROXY;
+            FeatureFlags |= SBIE_FEATURE_FLAG_NO_SIG;
 
             if (Dyndata_Active) {
 

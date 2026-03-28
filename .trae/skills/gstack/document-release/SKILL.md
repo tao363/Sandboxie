@@ -635,6 +635,12 @@ Where status is one of:
 - Already bumped — version was set by /ship
 - Skipped — file does not exist
 
+**Knowledge base check:** After outputting the doc health summary, check if `docs/.doc-meta.json`
+exists. If it does, add a final line to the output:
+"Note: This project has a `docs/` knowledge base managed by `/doc-init`. The top-level docs
+above are now current. Run `/doc-init` (garden mode) to also sync the structured knowledge base."
+If it does not exist, skip this note silently. This is informational — do not auto-invoke.
+
 ---
 
 ## Important Rules

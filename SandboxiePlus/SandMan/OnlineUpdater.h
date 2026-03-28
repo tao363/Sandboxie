@@ -64,21 +64,6 @@ signals:
 	void				Download(const QString& Path, const QVariantMap& Params);
 };
 
-class CGetCertJob : public CUpdatesJob
-{
-	Q_OBJECT
-
-protected:
-	friend class COnlineUpdater;
-
-	CGetCertJob(const QVariantMap& Params, QObject* parent = nullptr) : CUpdatesJob(Params, parent) {}
-
-	virtual void Finish(QNetworkReply* pReply);
-
-signals:
-	void				Certificate(const QByteArray& Certificate, const QVariantMap& Params);
-};
-
 class COnlineUpdater : public QObject
 {
 	Q_OBJECT
@@ -87,7 +72,7 @@ public:
 
 	SB_PROGRESS			GetUpdates(QObject* receiver, const char* member, const QVariantMap& Params = QVariantMap());
 	SB_PROGRESS			DownloadFile(const QString& Url, QObject* receiver, const char* member, const QVariantMap& Params = QVariantMap());
-	SB_PROGRESS			GetSupportCert(const QString& Serial, QObject* receiver, const char* member, const QVariantMap& Params = QVariantMap());
+	SB_PROGRESS			GetSupportCert(const QString& Serial, QObject* receiver, const char* member, const QVariantMap& Params = QVariantMap()); // stub - always returns error
 
 	static bool			IsLockRequired();
 
@@ -154,7 +139,6 @@ protected:
 
 	QString				GetOnNewUpdateOption() const;
 	QString				GetOnNewReleaseOption() const;
-	bool				ShowCertWarningIfNeeded();
 
 	EUpdateScope		ScanUpdateFiles(const QVariantMap& Update);
 	EUpdateScope		GetFileScope(const QString& Path);

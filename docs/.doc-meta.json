@@ -1,0 +1,274 @@
+{
+  "$schema": "doc-meta-v1",
+  "last_gardened_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+  "last_gardened_date": "2026-03-27T22:10:00Z",
+  "documents": {
+    "docs/architecture/overview.md": {
+      "content_hash": "sha256:52a55d105b70bb28f422ebe6675d3341d039c10d0792139aef61ce2c888143d9",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": [
+        "Sandboxie/core/drv/**",
+        "Sandboxie/core/dll/**",
+        "Sandboxie/core/svc/**",
+        "Sandboxie/core/low/**",
+        "SandboxiePlus/QSbieAPI/**",
+        "SandboxiePlus/SandMan/**"
+      ]
+    },
+    "docs/architecture/components.md": {
+      "content_hash": "sha256:e50121c727bc49fe1b52b093170977028a6190383c6303ac40c6d90ecb281648",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": [
+        "Sandboxie/core/**",
+        "SandboxiePlus/SandMan/**",
+        "SandboxiePlus/QSbieAPI/**",
+        "Sandboxie/apps/**",
+        "SandboxieTools/**"
+      ]
+    },
+    "docs/architecture/dependency-rules.md": {
+      "content_hash": "sha256:e3f23c7d38153390d5a4bd264e52a456c1da4ab23d7b66b68f22e89aca45c197",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": [
+        "**/*.sln",
+        "**/*.vcxproj",
+        "Sandboxie/common/**"
+      ]
+    },
+    "docs/architecture/build-system.md": {
+      "content_hash": "sha256:512d0ad685229423aeb2b6efd3d6312867adf500ca5c6381a6b72be73ed358b0",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": [
+        "**/*.sln",
+        "**/*.vcxproj",
+        ".github/workflows/**",
+        "Installer/**",
+        "*.cmd",
+        "*.bat"
+      ]
+    },
+    "docs/architecture/security-model.md": {
+      "content_hash": "sha256:d096cd7bacef9f6fca13d9e5881ea8aa69bb5c40adcd7d80917a37eaef100958",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": [
+        "Sandboxie/core/drv/token*",
+        "Sandboxie/core/drv/process*",
+        "Sandboxie/core/drv/thread*",
+        "Sandboxie/core/drv/ipc*",
+        "Sandboxie/core/drv/file*",
+        "Sandboxie/core/drv/key*",
+        "Sandboxie/core/drv/wfp*",
+        "Sandboxie/core/drv/net*",
+        "Sandboxie/core/drv/conf*",
+        "Sandboxie/core/dll/dns_filter*"
+      ]
+    },
+    "docs/guides/coding-conventions.md": {
+      "content_hash": "sha256:98a0d0e861f90126d05f6e852f5edf64379191664e398425a849aef27a3a57a2",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": [
+        ".editorconfig",
+        "CONTRIBUTING.md",
+        "CONTRIBUTING_zh_CN.md"
+      ]
+    },
+    "docs/guides/getting-started.md": {
+      "content_hash": "sha256:3fddf98068380b521a131afed418f7261c8537a74b9bc9fdf656ed78d11772b7",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": [
+        "README.md",
+        "CONTRIBUTING.md",
+        "Sandboxie/install/**"
+      ]
+    },
+    "docs/guides/testing-guide.md": {
+      "content_hash": "sha256:b0489b365cd72dc06d4d6abec32db44f83b0a6b6d4c42e6af3895cdc2964ebb2",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": [
+        ".github/workflows/**",
+        "TestCI.cmd"
+      ]
+    },
+    "docs/domain-map.md": {
+      "content_hash": "sha256:515d0264c85f237a1e7cea26c6b29999f1bd34b5883f4df79ef9c835c4fa1f75",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": [
+        "Sandboxie/**",
+        "SandboxiePlus/**",
+        "SandboxieTools/**"
+      ]
+    },
+    "docs/glossary.md": {
+      "content_hash": "sha256:39748e993d2218ee9a377682b60133c600c421a211f683e41676663ccd261364",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": [
+        "Sandboxie/common/defines.h",
+        "Sandboxie/core/drv/api_defs.h"
+      ]
+    },
+    "docs/beliefs.md": {
+      "content_hash": "sha256:f8c2cf29a931513276316342523473849fa6121c9d894893bd2eead746c27d0c",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": []
+    },
+    "docs/plans/tech-debt.md": {
+      "content_hash": "sha256:00f200a5f9e90a7a06f61086b9ef098bd96a5909a9b42d0a2354fa16f745a65d",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": []
+    },
+    "docs/quality.md": {
+      "content_hash": "sha256:47322d5473584051af55d4fcd9f9452ed95c2ad2ad5b41d72c3e5264c9aff5c4",
+      "last_verified": "2026-03-27T22:10:00Z",
+      "verified_at_commit": "95850b52b72b8440e49f2a00fad2504c5237566f",
+      "status": "fresh",
+      "mapped_code_paths": []
+    }
+  },
+  "mappings": {
+    "description": "代码路径到文档的映射。Garden 模式用此判断哪些文档可能受代码变更影响。",
+    "rules": [
+      {
+        "code_pattern": "Sandboxie/core/drv/**",
+        "affects_docs": [
+          "docs/architecture/overview.md",
+          "docs/architecture/components.md",
+          "docs/architecture/security-model.md"
+        ],
+        "reason": "内核驱动代码变更影响架构、组件和安全模型文档"
+      },
+      {
+        "code_pattern": "Sandboxie/core/dll/**",
+        "affects_docs": [
+          "docs/architecture/overview.md",
+          "docs/architecture/components.md"
+        ],
+        "reason": "注入 DLL 代码变更影响架构和组件文档"
+      },
+      {
+        "code_pattern": "Sandboxie/core/svc/**",
+        "affects_docs": [
+          "docs/architecture/overview.md",
+          "docs/architecture/components.md"
+        ],
+        "reason": "系统服务代码变更影响架构和组件文档"
+      },
+      {
+        "code_pattern": "Sandboxie/core/low/**",
+        "affects_docs": [
+          "docs/architecture/overview.md",
+          "docs/architecture/components.md"
+        ],
+        "reason": "低级注入代码变更影响架构和组件文档"
+      },
+      {
+        "code_pattern": "SandboxiePlus/SandMan/**",
+        "affects_docs": [
+          "docs/architecture/components.md"
+        ],
+        "reason": "GUI 代码变更影响组件文档"
+      },
+      {
+        "code_pattern": "SandboxiePlus/QSbieAPI/**",
+        "affects_docs": [
+          "docs/architecture/components.md",
+          "docs/architecture/dependency-rules.md"
+        ],
+        "reason": "API 层代码变更影响组件和依赖文档"
+      },
+      {
+        "code_pattern": "Sandboxie/apps/**",
+        "affects_docs": [
+          "docs/architecture/components.md"
+        ],
+        "reason": "辅助应用变更影响组件文档"
+      },
+      {
+        "code_pattern": "SandboxieTools/**",
+        "affects_docs": [
+          "docs/architecture/components.md"
+        ],
+        "reason": "工具代码变更影响组件文档"
+      },
+      {
+        "code_pattern": "Sandboxie/install/**",
+        "affects_docs": [
+          "docs/guides/getting-started.md"
+        ],
+        "reason": "安装相关变更影响入门指南"
+      },
+      {
+        "code_pattern": "**/*.sln",
+        "affects_docs": [
+          "docs/architecture/build-system.md",
+          "docs/architecture/dependency-rules.md"
+        ],
+        "reason": "解决方案文件变更影响构建和依赖文档"
+      },
+      {
+        "code_pattern": "**/*.vcxproj",
+        "affects_docs": [
+          "docs/architecture/build-system.md"
+        ],
+        "reason": "项目文件变更影响构建文档"
+      },
+      {
+        "code_pattern": ".github/workflows/**",
+        "affects_docs": [
+          "docs/architecture/build-system.md",
+          "docs/guides/testing-guide.md"
+        ],
+        "reason": "CI 配置变更影响构建和测试文档"
+      },
+      {
+        "code_pattern": ".editorconfig",
+        "affects_docs": [
+          "docs/guides/coding-conventions.md"
+        ],
+        "reason": "编辑器配置变更影响编码约定文档"
+      },
+      {
+        "code_pattern": "Installer/**",
+        "affects_docs": [
+          "docs/architecture/build-system.md"
+        ],
+        "reason": "安装包配置变更影响构建文档"
+      },
+      {
+        "code_pattern": "Sandboxie/common/**",
+        "affects_docs": [
+          "docs/architecture/dependency-rules.md"
+        ],
+        "reason": "公共库变更影响依赖规则文档"
+      },
+      {
+        "code_pattern": "AGENTS.md",
+        "affects_docs": [],
+        "reason": "导航文件自身变更，无需映射"
+      }
+    ]
+  }
+}

@@ -37,7 +37,6 @@
 #include "core/drv/api_defs.h"
 #include <time.h>
 #include "core/svc/InteractiveWire.h"
-#include "core/drv/verify.h"
 
 
 
@@ -255,8 +254,6 @@ INT_PTR AboutDialogProc(
 
             if (Actions == 1)
                 EndDialog(hwnd, IDOK);
-            else if (Actions == 2)
-                ShellExecute(NULL , NULL, L"https://sandboxie-plus.com/go.php?to=sbie-get-cert", NULL, NULL, SW_SHOWNORMAL);
             else
                 EndDialog(hwnd, IDCANCEL);
 
@@ -283,11 +280,6 @@ bool DoAboutDialog(bool bReminder)
     g_bReminder = bReminder;
 
     if (g_bReminder) {
-
-        __declspec(align(8)) SCertInfo CertInfo = { 0 };
-        SbieApi_QueryDrvInfo(-1, &CertInfo, sizeof(CertInfo));
-        if (CertInfo.active)
-            return true;
 
         time_t InstallDate = 0;
         SbieApi_Call(API_GET_SECURE_PARAM, 3, L"InstallationDate", (ULONG_PTR)&InstallDate, sizeof(InstallDate));

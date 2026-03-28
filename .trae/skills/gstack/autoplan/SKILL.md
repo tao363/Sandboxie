@@ -745,6 +745,10 @@ Replace field values with actual counts from the review.
 
 Suggest next step: `/ship` when ready to create the PR.
 
+If `docs/.doc-meta.json` does not exist and the plan introduces new architectural components,
+add an informational note: "Consider running `/doc-init` after implementation to create a
+structured knowledge base for AI agents and future contributors."
+
 ---
 
 ## Important Rules

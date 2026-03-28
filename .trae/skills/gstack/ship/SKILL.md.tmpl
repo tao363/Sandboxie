@@ -512,6 +512,34 @@ doc updates — the user runs `/ship` and documentation stays current without a 
 
 ---
 
+## Step 8.6: Knowledge base sync (conditional)
+
+After `/document-release` completes, check if a structured knowledge base exists:
+
+1. Check if `docs/.doc-meta.json` exists in the project root.
+
+2. **If it exists** (the project uses `/doc-init`): Auto-invoke `/doc-init` in garden mode.
+   Read the skill file: `cat ${CLAUDE_SKILL_DIR}/../doc-init/SKILL.md`
+   Follow its garden mode workflow — it reads `docs/.doc-meta.json`, diffs against
+   the last gardened commit, and updates any stale docs in the `docs/` knowledge base.
+   Skip shared sections (Preamble, AskUserQuestion Format, Completeness Principle,
+   Search Before Building, Contributor Mode, Completion Status Protocol, Telemetry)
+   since this skill already ran them.
+   If any docs were updated, commit and push:
+   ```bash
+   git add docs/ AGENTS.md CLAUDE.md && git commit -m "docs(garden): sync knowledge base with shipped changes" && git push
+   ```
+   If no docs needed updating, say "Knowledge base is current — no updates needed."
+
+3. **If it does not exist:** Output an informational note:
+   "No `docs/` knowledge base found. Run `/doc-init` to create a structured project
+   knowledge base with architecture docs, coding conventions, and freshness tracking."
+   This is informational only — do not block or prompt.
+
+This step is automatic. Do not ask the user for confirmation.
+
+---
+
 ## Important Rules
 
 - **Never skip tests.** If tests fail, stop.
@@ -525,4 +553,4 @@ doc updates — the user runs `/ship` and documentation stays current without a 
 - **Use Greptile reply templates from greptile-triage.md.** Every reply includes evidence (inline diff, code references, re-rank suggestion). Never post vague replies.
 - **Never push without fresh verification evidence.** If code changed after Step 3 tests, re-run before pushing.
 - **Step 3.4 generates coverage tests.** They must pass before committing. Never commit failing tests.
-- **The goal is: user says `/ship`, next thing they see is the review + PR URL + auto-synced docs.**
+- **The goal is: user says `/ship`, next thing they see is the review + PR URL + auto-synced docs + fresh knowledge base.**

@@ -625,8 +625,7 @@ void CSandMan::CreateBoxMenu(QMenu* pMenu, int iOffset, int iSysTrayFilter)
 
 	QAction* pPos = pMenu->actions().at(iOffset);
 
-	bool bPlus = (theAPI->GetFeatureFlags() & CSbieAPI::eSbieFeatureCert) != 0;
-	QIcon Icon = QIcon(bPlus ? ":/Boxes/Group2" : ":/Boxes/Group"); // theGUI->GetBoxIcon(CSandBoxPlus::eDefault, false);
+	QIcon Icon = QIcon(":/Boxes/Group2"); // cert check removed — always use Plus icon
 
 	QList<CSandBoxPtr> Boxes = theAPI->GetAllBoxes().values(); // map is sorted by key (box name)
 	QMap<QString, QStringList> Groups = pBoxView->GetGroups();
@@ -972,7 +971,6 @@ void CSandMan::OnSysTray(QSystemTrayIcon::ActivationReason Reason)
 
 				break;
 			}
-			CheckSupport();
 			show();
 		case QSystemTrayIcon::Trigger:
 			if (isVisible() && !TriggerSet)
