@@ -2773,7 +2773,7 @@ void CSandMan::OnStatusChanged()
 
 		g_FeatureFlags = theAPI->GetFeatureFlags();
 
-		Status = theAPI->ReloadBoxes(true);
+		SB_STATUS Status = theAPI->ReloadBoxes(true);
 		if (Status) {
 
 			auto AllBoxes = theAPI->GetAllBoxes();
