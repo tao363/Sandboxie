@@ -1886,7 +1886,7 @@
        </widget>
        <widget class="QWidget" name="tabSupport">
         <attribute name="title">
-         <string>Support &amp;&amp; Updates</string>
+         <string>Updates</string>
         </attribute>
         <layout class="QGridLayout" name="gridLayout_10">
          <item row="0" column="1">
@@ -1985,7 +1985,7 @@
                   </font>
                  </property>
                  <property name="text">
-                  <string>This supporter certificate has expired, please &lt;a href=&quot;https://sandboxie-plus.com/go.php?to=sbie-renew-cert&quot;&gt;get an updated certificate&lt;/a&gt;.</string>
+                  <string>This certificate has expired.</string>
                  </property>
                  <property name="wordWrap">
                   <bool>true</bool>
@@ -2020,7 +2020,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Keeping Sandboxie up to date with the rolling releases of Windows and compatible with all web browsers is a never-ending endeavor. You can support the development by &lt;a href=&quot;https://sandboxie-plus.com/go.php?to=sbie-contribute&quot;&gt;directly contributing to the project&lt;/a&gt;, showing your support by &lt;a href=&quot;https://sandboxie-plus.com/go.php?to=sbie-obtain-cert&quot;&gt;purchasing a supporter certificate&lt;/a&gt;, becoming a patron by &lt;a href=&quot;https://sandboxie-plus.com/go.php?to=patreon&quot;&gt;subscribing on Patreon&lt;/a&gt;, or through a &lt;a href=&quot;https://sandboxie-plus.com/go.php?to=donate&quot;&gt;PayPal donation&lt;/a&gt;.&lt;br /&gt;Your support plays a vital role in the advancement and maintenance of Sandboxie.</string>
+                  <string>Sandboxie-Plus is open source. See &lt;a href=&quot;https://sandboxie-plus.com/go.php?to=sbie-contribute&quot;&gt;how to contribute&lt;/a&gt; on the project repository.</string>
                  </property>
                  <property name="textFormat">
                   <enum>Qt::TextFormat::RichText</enum>
@@ -2052,7 +2052,7 @@
                <item row="3" column="1" colspan="4">
                 <widget class="QLabel" name="lblSupportCert">
                  <property name="text">
-                  <string>Supporters of the Sandboxie-Plus project can receive a &lt;a href=&quot;https://sandboxie-plus.com/go.php?to=sbie-cert&quot;&gt;supporter certificate&lt;/a&gt;. It's like a license key but for awesome people using open source software. :-)</string>
+                  <string>Optional &lt;a href=&quot;https://sandboxie-plus.com/go.php?to=sbie-use-cert&quot;&gt;Certificate.dat&lt;/a&gt; for legacy or custom setups.</string>
                  </property>
                  <property name="wordWrap">
                   <bool>true</bool>
@@ -2068,14 +2068,14 @@
                   </size>
                  </property>
                  <property name="placeholderText">
-                  <string>Enter the support certificate here</string>
+                  <string>Enter certificate data here</string>
                  </property>
                 </widget>
                </item>
                <item row="6" column="1" colspan="3">
                 <widget class="QLabel" name="lblSerial">
                  <property name="text">
-                  <string>Retrieve/Upgrade/Renew certificate using Serial Number</string>
+                  <string>Retrieve or update certificate using serial number</string>
                  </property>
                  <property name="openExternalLinks">
                   <bool>false</bool>

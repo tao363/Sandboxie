@@ -797,12 +797,6 @@ void CSandMan::CreateViewBaseMenu()
 void CSandMan::CreateHelpMenu(bool bAdvanced)
 {
 	m_pMenuHelp = m_pMenuBar->addMenu(tr("&Help"));
-		//m_pMenuHelp->addAction(tr("Support Sandboxie-Plus on Patreon"), this, SLOT(OnHelp()));
-		//m_pSupport = m_pMenuHelp->addAction(tr("Support Sandboxie-Plus with Donations"), this, SLOT(OnHelp()));
-		//if (!bAdvanced) {
-		//	m_pMenuHelp->removeAction(m_pSupport);
-		//	m_pMenuBar->addAction(m_pSupport);
-		//}
 		m_pContribution = m_pMenuHelp->addAction(CSandMan::GetIcon("Support"), tr("Contribute to Sandboxie-Plus"), this, SLOT(OnHelp()));
 		m_pBoxAssistant = m_pMenuHelp->addAction(CSandMan::GetIcon("FirstAid"), tr("Troubleshooting Wizard"), this, SLOT(OnBoxAssistant()));
 		m_pManual = m_pMenuHelp->addAction(CSandMan::GetIcon("Help"), tr("Online Documentation"), this, SLOT(OnHelp()));
@@ -4465,9 +4459,6 @@ void CSandMan::LoadLanguage(const QString& Lang, const QString& Module, int Inde
 
 void CSandMan::OnHelp()
 {
-	//if (sender() == m_pSupport)
-	//	QDesktopServices::openUrl(QUrl("https://sandboxie-plus.com/go.php?to=donate"));
-	//else
 	if (sender() == m_pContribution)
 		QDesktopServices::openUrl(QUrl("https://sandboxie-plus.com/go.php?to=sbie-contribute"));
 	else if (sender() == m_pManual)
@@ -4475,7 +4466,7 @@ void CSandMan::OnHelp()
 	else if (sender() == m_pForum)
 		QDesktopServices::openUrl(QUrl("https://sandboxie-plus.com/go.php?to=sbie-forum"));
 	else
-		QDesktopServices::openUrl(QUrl("https://sandboxie-plus.com/go.php?to=patreon"));
+		QDesktopServices::openUrl(QUrl("https://sandboxie-plus.com/go.php?to=sbie-docs"));
 }
 
 void CSandMan::OnAbout()

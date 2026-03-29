@@ -40,7 +40,7 @@ void CSetupWizard::showHelp()
 
     switch (currentId()) {
     case Page_Intro:
-        message = tr("The decision you make here will affect which page you get to see next.");
+        message = tr("This wizard walks you through initial Sandboxie-Plus setup.");
         break;
     default:
         message = tr("This help is likely not to be of any help.");
@@ -61,10 +61,6 @@ bool CSetupWizard::ShowWizard(int iOldLevel)
         return false;
     
     if (iOldLevel < SETUP_LVL_1) {
-        //bool useBusiness = wizard.field("useBusiness").toBool();
-        //QString Certificate = wizard.field("useCertificate").toString();
-        //bool isEvaluate = wizard.field("isEvaluate").toBool();
-
         if (wizard.field("useAdvanced").toBool())
             theConf->SetValue("Options/ViewMode", 1);
         else if (wizard.field("useSimple").toBool())
@@ -174,43 +170,6 @@ CIntroPage::CIntroPage(QWidget *parent)
     pTopLabel->setWordWrap(true);
     layout->addWidget(pTopLabel);
 
-    QWidget* pSpace = new QWidget();
-    pSpace->setMinimumHeight(16);
-    layout->addWidget(pSpace);
-
-    m_pLabel = new QLabel(tr("Select how you would like to use Sandboxie-Plus"));
-    layout->addWidget(m_pLabel);
-
-    m_pPersonal = new QRadioButton(tr("&Personally, for private non-commercial use"));
-    layout->addWidget(m_pPersonal);
-    connect(m_pPersonal, SIGNAL(toggled(bool)), this, SIGNAL(completeChanged()));
-    registerField("usePersonal", m_pPersonal);
-
-    m_pBusiness = new QRadioButton(tr("&Commercially, for business or enterprise use"));
-    layout->addWidget(m_pBusiness);
-    connect(m_pBusiness, SIGNAL(toggled(bool)), this, SIGNAL(completeChanged()));
-    registerField("useBusiness", m_pBusiness);
-
-    QLabel* pNote = new QLabel(tr("Note: this option is persistent"));
-    layout->addWidget(pNote);
-
-    uchar BusinessUse = 2;
-    {
-        uchar UsageFlags = 0;
-        if (theAPI->GetSecureParam("UsageFlags", &UsageFlags, sizeof(UsageFlags)))
-            BusinessUse = (UsageFlags & 1) != 0 ? 1 : 0;
-    }
-    if (BusinessUse != 2) {
-        m_pPersonal->setChecked(BusinessUse == 0);
-        m_pBusiness->setChecked(BusinessUse == 1);
-        if ((QApplication::keyboardModifiers() & Qt::ControlModifier) == 0) {
-            m_pLabel->setEnabled(false);
-            m_pPersonal->setEnabled(false);
-            m_pBusiness->setEnabled(false);
-        }
-        pNote->setEnabled(false);
-    }
-
     setLayout(layout);
 
     if (theGUI->m_DarkTheme) {
@@ -223,13 +182,6 @@ CIntroPage::CIntroPage(QWidget *parent)
 int CIntroPage::nextId() const
 {
     return CSetupWizard::Page_UI;
-}
-
-bool CIntroPage::isComplete() const 
-{
-    if (m_pLabel->isEnabled() && !m_pPersonal->isChecked() && !m_pBusiness->isChecked())
-        return false;
-    return QWizardPage::isComplete();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -530,7 +482,7 @@ CSBUpdate::CSBUpdate(QWidget *parent)
 
     layout->addItem(new QSpacerItem(10, 10, QSizePolicy::Fixed, QSizePolicy::Expanding), row++, 0);
 
-    m_pBottomLabel = new QLabel(tr("Access to the latest compatibility templates and the online troubleshooting database requires a valid <a href=\"https://sandboxie-plus.com/go.php?to=sbie-cert\">supporter certificate</a>."));
+    m_pBottomLabel = new QLabel(tr("Access to the latest compatibility templates and the online troubleshooting database uses the project update channels when enabled."));
     connect(m_pBottomLabel, SIGNAL(linkActivated(const QString&)), theGUI, SLOT(OpenUrl(const QString&)));
     m_pBottomLabel->setWordWrap(true);
     layout->addWidget(m_pBottomLabel, row++, 0, 1, rows);

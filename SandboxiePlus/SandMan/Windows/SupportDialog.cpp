@@ -140,8 +140,8 @@ void CSupportDialog::UpdateButtons()
 			switch (pButton->property("Action").toInt()) {
 			case 0:	pButton->setText(tr("Quit")); break;
 			case 1:	pButton->setText(tr("Continue")); break;
-			case 2: pButton->setText(tr("Get Certificate")); break;
-			case 3: pButton->setText(tr("Enter Certificate")); break;
+			case 2: pButton->setText(tr("Settings")); break;
+			case 3: pButton->setText(tr("Continue")); break;
 			}
 		}
 	}

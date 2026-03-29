@@ -38,9 +38,6 @@ void COptionsWindow::CreateGeneral()
 
 	connect(ui.lblBoxInfo, SIGNAL(linkActivated(const QString&)), theGUI, SLOT(OpenUrl(const QString&)));
 
-	ui.lblSupportCert->setVisible(false);
-
-
 	m_HoldBoxType = false;
 
 	connect(ui.cmbBoxType, SIGNAL(currentIndexChanged(int)), this, SLOT(OnBoxTypChanged()));

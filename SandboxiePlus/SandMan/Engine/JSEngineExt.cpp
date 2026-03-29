@@ -1,22 +1,14 @@
 /****************************************************************************
 **
-** Copyright (C) 2023 David Xanatos (xanasoft.com) All rights reserved.
+** Copyright (C) 2023 David Xanatos. All rights reserved.
 ** Contact: XanatosDavid@gmil.com
 **
-**
-** To use the V4ScriptTools in a commercial project, you must obtain
-** an appropriate business use license.
-**
-**
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
+** This file may be used under the terms of the GNU General
 ** Public License version 3.0 as published by the Free Software Foundation
 ** and appearing in the file LICENSE.GPL included in the packaging of this
 ** file. Please review the following information to ensure the GNU General
 ** Public License version 3.0 requirements will be met:
 ** http://www.gnu.org/copyleft/gpl.html.
-**
-**
 **
 ****************************************************************************/
 #include "stdafx.h"

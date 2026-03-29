@@ -486,11 +486,16 @@ CSettingsWindow::CSettingsWindow(QWidget* parent)
 
 
 
+	// Certificate / licensing UI removed — keep updater sub-tab only
+	int certTabIdx = ui.tabsSupport->indexOf(ui.tabCert);
+	if (certTabIdx >= 0)
+		ui.tabsSupport->removeTab(certTabIdx);
 	ui.tabsSupport->setCurrentIndex(0);
+	ui.tabsSupport->setTabIcon(0, CSandMan::GetIcon("ReloadIni"));
 
-	ui.tabsSupport->setTabIcon(0, CSandMan::GetIcon("Cert"));
-
-	ui.tabsSupport->setTabIcon(1, CSandMan::GetIcon("ReloadIni"));
+	int updatesPageIdx = ui.tabs->indexOf(ui.tabSupport);
+	if (updatesPageIdx >= 0)
+		ui.tabs->setTabText(updatesPageIdx, tr("Updates"));
 
 
 
@@ -2069,12 +2074,6 @@ void CSettingsWindow::showTab(const QString& Name, bool bExclusive, bool bExec)
 	if(pWidget == ui.tabCompat)
 
 		m_CompatLoaded = 2;
-
-	if(pWidget == ui.tabSupport)
-
-		ui.chkNoCheck->setVisible(true);
-
-
 
 	if (bExclusive) {
 
@@ -3709,35 +3708,9 @@ void CSettingsWindow::UpdateUpdater()
 
 		ui.cmbInterval->setEnabled(true);
 
+		ui.cmbUpdate->setEnabled(true);
 
-
-		bool bAllowAuto;
-
-		if (ui.radStable->isChecked() && !bOk) {
-
-			ui.cmbUpdate->setEnabled(false);
-
-			ui.cmbUpdate->setCurrentIndex(ui.cmbUpdate->findData("ignore"));
-
-
-
-			ui.lblRevision->setText(tr("Supporter certificate required for access"));
-
-			bAllowAuto = false;
-
-		} else {
-
-			ui.cmbUpdate->setEnabled(true);
-
-
-
-			ui.lblRevision->setText(QString());
-
-			bAllowAuto = true;
-
-		}
-
-
+		ui.lblRevision->setText(QString());
 
 		ui.cmbRelease->setEnabled(true);
 
@@ -3747,19 +3720,11 @@ void CSettingsWindow::UpdateUpdater()
 
 			QStandardItem* item = model->item(i);
 
-			item->setFlags(bAllowAuto ? (item->flags() | Qt::ItemIsEnabled) : (item->flags() & ~Qt::ItemIsEnabled));
+			item->setFlags(item->flags() | Qt::ItemIsEnabled);
 
 		}
 
-
-
-		if(!bAllowAuto)
-
-			ui.lblRelease->setText(tr("Supporter certificate required for automation"));
-
-		else
-
-			ui.lblRelease->setText(QString());
+		ui.lblRelease->setText(QString());
 
 	}
 
@@ -6453,11 +6418,11 @@ QString CSettingsWindow::GetCertType()
 
 	else if (g_CertInfo.type == eCertGreatPatreon)
 
-		CertType = tr("Great Patreon");
+		CertType = tr("Supporter (Plus)");
 
 	else if (CERT_IS_TYPE(g_CertInfo, eCertPatreon))
 
-		CertType = tr("Patreon");
+		CertType = tr("Supporter (subscription)");
 
 	else if (g_CertInfo.type == eCertFamily)
 

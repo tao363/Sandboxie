@@ -43,12 +43,6 @@ public:
     CIntroPage(QWidget *parent = nullptr);
 
     int nextId() const override;
-    bool isComplete() const override;
-
-private:
-    QLabel* m_pLabel;
-    QRadioButton *m_pPersonal;
-    QRadioButton *m_pBusiness;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
