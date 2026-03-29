@@ -2,6 +2,11 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4100) // unreferenced formal parameter
+#pragma warning(disable: 4996) // deprecated Qt API
+#endif
+
 
 
 // std includes
