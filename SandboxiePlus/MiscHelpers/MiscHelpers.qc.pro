@@ -16,6 +16,7 @@ win32:LIBS += -lUser32 -lShell32 -lOleAut32
 
 !mac:unix:QMAKE_LFLAGS += -Wl,-rpath,'\$\$ORIGIN'
 mac:QMAKE_CXXFLAGS += -std=c++11
+win32:QMAKE_CXXFLAGS += /wd4996 /wd4100
 
 !win32:QMAKE_LFLAGS +=-rdynamic
 
