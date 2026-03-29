@@ -348,9 +348,10 @@ _FX NTSTATUS Session_Api_Leader(PROCESS *proc, ULONG64 *parms)
 
         if (proc)
             status = STATUS_NOT_IMPLEMENTED;
-        else if (!MyIsCallerSigned()) 
-            status = STATUS_INVALID_SIGNATURE; // STATUS_ACCESS_DENIED
         else {
+
+            // Session leader is SandMan: allow unsigned local builds (no Authenticode / .sig).
+            // Other unsandboxed entry points still gate on MyIsCallerSigned().
 
             session = Session_Get(TRUE, -1, &irql);
             if (! session)
