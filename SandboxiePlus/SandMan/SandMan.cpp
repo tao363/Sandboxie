@@ -797,7 +797,6 @@ void CSandMan::CreateViewBaseMenu()
 void CSandMan::CreateHelpMenu(bool bAdvanced)
 {
 	m_pMenuHelp = m_pMenuBar->addMenu(tr("&Help"));
-		m_pContribution = m_pMenuHelp->addAction(CSandMan::GetIcon("Support"), tr("Contribute to Sandboxie-Plus"), this, SLOT(OnHelp()));
 		m_pBoxAssistant = m_pMenuHelp->addAction(CSandMan::GetIcon("FirstAid"), tr("Troubleshooting Wizard"), this, SLOT(OnBoxAssistant()));
 		m_pManual = m_pMenuHelp->addAction(CSandMan::GetIcon("Help"), tr("Online Documentation"), this, SLOT(OnHelp()));
 		m_pForum = m_pMenuHelp->addAction(CSandMan::GetIcon("Forum"), tr("Visit Support Forum"), this, SLOT(OnHelp()));
@@ -1189,9 +1188,7 @@ QList<ToolBarAction> CSandMan::GetAvailableToolBarActions()
 			ToolBarAction{ "About", m_pAbout },
 			ToolBarAction{ "", nullptr },        // separator
 			ToolBarAction{ "RestartAsAdmin", m_pRestart },
-			ToolBarAction{ "Exit", m_pExit },
-			ToolBarAction{ "", nullptr },        // separator
-			ToolBarAction{ "Contribute", m_pContribution }
+			ToolBarAction{ "Exit", m_pExit }
 	};
 }
 
@@ -1348,8 +1345,6 @@ void CSandMan::CreateToolBar(bool rebuild)
 			qDebug() << "ERROR: You forgot to handle ToolBarAction scriptName " << sa.scriptName;
 		}
 	}
-
-	// Contribute-Label
 
 	QWidget* pSpacer = new QWidget();
 	pSpacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -4459,9 +4454,7 @@ void CSandMan::LoadLanguage(const QString& Lang, const QString& Module, int Inde
 
 void CSandMan::OnHelp()
 {
-	if (sender() == m_pContribution)
-		QDesktopServices::openUrl(QUrl("https://sandboxie-plus.com/go.php?to=sbie-contribute"));
-	else if (sender() == m_pManual)
+	if (sender() == m_pManual)
 		QDesktopServices::openUrl(QUrl("https://sandboxie-plus.com/go.php?to=sbie-docs"));
 	else if (sender() == m_pForum)
 		QDesktopServices::openUrl(QUrl("https://sandboxie-plus.com/go.php?to=sbie-forum"));

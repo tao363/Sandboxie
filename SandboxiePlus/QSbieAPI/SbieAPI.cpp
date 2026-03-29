@@ -1207,22 +1207,58 @@ SB_STATUS CSbieAPI::ReloadBoxes(bool bForceUpdate)
 	return SB_OK;
 }
 
-QString CSbieAPI__FormatNtStatus(long nsCode) 
+QString CSbieAPI__FormatNtStatus(long nsCode)
 {
+	// RtlNtStatusToDosError + FormatMessage(FROM_HMODULE ntdll) maps many NTSTATUS values to unrelated
+	// Win32/DOS strings (e.g. 0xC0000034 shown with a wrong symbolic name). Prefer explicit text for common codes.
+	const ULONG u = (ULONG)(ULONG_PTR)nsCode;
+	switch (u) {
+	case 0xC0000034UL: // STATUS_OBJECT_NAME_NOT_FOUND
+		return QStringLiteral("STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034) — object not found; often: Sandboxie driver not loaded or SbieSvc LPC port unavailable");
+	case 0xC000003AUL: // STATUS_OBJECT_PATH_NOT_FOUND
+		return QStringLiteral("STATUS_OBJECT_PATH_NOT_FOUND (0xC000003A) — path not found");
+	case 0xC0000033UL: // STATUS_OBJECT_NAME_INVALID
+		return QStringLiteral("STATUS_OBJECT_NAME_INVALID (0xC0000033)");
+	case 0xC0000022UL: // STATUS_ACCESS_DENIED
+		return QStringLiteral("STATUS_ACCESS_DENIED (0xC0000022)");
+	case 0xC0000001UL: // STATUS_UNSUCCESSFUL
+		return QStringLiteral("STATUS_UNSUCCESSFUL (0xC0000001)");
+	case 0xC0000002UL: // STATUS_NOT_IMPLEMENTED
+		return QStringLiteral("STATUS_NOT_IMPLEMENTED (0xC0000002)");
+	default:
+		break;
+	}
+
 	static HMODULE hNtDll = NULL;
-	if(!hNtDll)
+	if (!hNtDll)
 		hNtDll = GetModuleHandleW(L"ntdll.dll");
 	if (hNtDll == NULL)
 		return QString();
 
+	// Use NTSTATUS as message id for ntdll (not RtlNtStatusToDosError) when possible.
 	WCHAR* ret_str = NULL;
-    DWORD dwRes = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE,
-        hNtDll, nsCode >= 0 ? nsCode : RtlNtStatusToDosError(nsCode), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR)&ret_str, 0, NULL);
+	DWORD dwRes = FormatMessageW(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_IGNORE_INSERTS,
+		hNtDll, u, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPWSTR)&ret_str, 0, NULL);
 
-	QString qStr = dwRes > 0 ? QString::fromWCharArray(ret_str) : QString();
-    LocalFree(ret_str);
-	return qStr;
+	QString qStr = dwRes > 0 ? QString::fromWCharArray(ret_str).trimmed() : QString();
+	LocalFree(ret_str);
+	if (!qStr.isEmpty())
+		return qStr;
+
+	// Last resort: system string from mapped DOS error (may still be vague).
+	ret_str = NULL;
+	dwRes = FormatMessageW(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, HRESULT_FROM_NT(u), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPWSTR)&ret_str, 0, NULL);
+	qStr = dwRes > 0 ? QString::fromWCharArray(ret_str).trimmed() : QString();
+	LocalFree(ret_str);
+	if (!qStr.isEmpty())
+		return qStr;
+
+	return QStringLiteral("NTSTATUS 0x%1").arg(u, 8, 16, QChar(QLatin1Char('0')));
 }
 
 SB_STATUS CSbieAPI::SbieIniSet(void *RequestBuf, void *pPasswordWithinRequestBuf, const QString& SectionName, const QString& SettingName)
