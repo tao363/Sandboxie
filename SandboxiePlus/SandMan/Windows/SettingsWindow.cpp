@@ -381,10 +381,8 @@ CSettingsWindow::CSettingsWindow(QWidget* parent)
 
 {
 
-	// 强制初始化证书
+	// 初始化证书为全功能激活
 	InitCertInfoDefaults();
-
-{
 
 	Qt::WindowFlags flags = windowFlags();
 

@@ -144,6 +144,7 @@ protected:
 	EUpdateScope		GetFileScope(const QString& Path);
 
 	bool				AskDownload(const QVariantMap& Update, bool bAuto);
+	bool				ShowCertWarningIfNeeded();
 
 	static bool			RunInstaller2(const QString& FilePath, bool bSilent);
 

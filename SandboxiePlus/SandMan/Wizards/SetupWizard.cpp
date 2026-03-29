@@ -195,9 +195,7 @@ CIntroPage::CIntroPage(QWidget *parent)
     layout->addWidget(pNote);
 
     uchar BusinessUse = 2;
-    if (!g_Certificate.isEmpty())
-        BusinessUse = 0;
-    else {
+    {
         uchar UsageFlags = 0;
         if (theAPI->GetSecureParam("UsageFlags", &UsageFlags, sizeof(UsageFlags)))
             BusinessUse = (UsageFlags & 1) != 0 ? 1 : 0;
