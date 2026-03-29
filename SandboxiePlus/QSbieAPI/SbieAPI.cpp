@@ -455,8 +455,16 @@ SB_STATUS CSbieAPI__ConnectPort(SSbieAPI* m)
 	UNICODE_STRING PortName;
 	RtlInitUnicodeString(&PortName, SBIESVC_PORT);
 	NTSTATUS status = NtConnectPort(&m->PortHandle, &PortName, &QoS, NULL, NULL, &m->MaxDataLen, NULL, NULL);
-	if (!NT_SUCCESS(status))
+	if (!NT_SUCCESS(status)) {
+		// OBJECT_NAME_NOT_FOUND: SbieSvc is stopped or failed before creating the LPC port.
+		if (status == (NTSTATUS)0xC0000034L)
+			return SB_ERR(SB_ServiceFail,
+				QVariantList() << QStringLiteral(
+					"SbieSvc port missing (0xC0000034). Start Sandboxie Service in services.msc "
+					"or SandMan \u2192 Sandbox \u2192 Maintenance \u2192 Start Service."),
+				status);
 		return SB_ERR(status); // 2203
+	}
 
 	// Function associate PortHandle with thread, and sends LPC_TERMINATION_MESSAGE to specified port immediately after call NtTerminateThread.
 	//NtRegisterThreadTerminatePort(m->PortHandle);
